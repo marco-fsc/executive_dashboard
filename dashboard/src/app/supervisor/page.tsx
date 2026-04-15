@@ -49,20 +49,20 @@ export default async function SupervisorPage({
               {program ? <a href="/supervisor" style={{ marginLeft: "auto" }}>Clear</a> : <span style={{ marginLeft: "auto" }} />}
             </form>
 
-            <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))" }}>
+            <div style={{ display: "grid", gap: 14, gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))" }}>
               {cmSummary(ds, program || null).map((cm) => (
-                <div key={String(cm.cm)} className="card">
-                  <div style={{ display: "flex", justifyContent: "space-between" }}>
-                    <strong>{String(cm.cm)}</strong>
-                    <span>{String(cm.active_clients)} active</span>
+                <div key={String(cm.cm)} className="card" style={{ padding: 0, overflow: "hidden" }}>
+                  <div style={{ background: "var(--color-surface-alt)", padding: "12px 18px", display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid var(--color-border)" }}>
+                    <strong style={{ color: "var(--color-brand-dark)" }}>{String(cm.cm)}</strong>
+                    <span className="badge badge-active">{String(cm.active_clients)} active</span>
                   </div>
-                  <div style={{ marginTop: 8, fontSize: 14 }}>
-                    <div>Perm exits: {String(cm.perm_exits)}</div>
-                    <div>Homeless exits: {String(cm.homeless_exits)}</div>
-                    <div>Services logged: {String(cm.services_logged)}</div>
-                    <div>No services: {String(cm.zero_services)}</div>
-                    <div>No recent contact: {String(cm.no_recent_contact)}</div>
-                    <div>High risk clients: {String(cm.high_risk_clients)}</div>
+                  <div style={{ padding: "14px 18px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px 24px", fontSize: 14 }}>
+                    <div>Perm exits <strong style={{ float: "right" }}>{String(cm.perm_exits)}</strong></div>
+                    <div>Homeless exits <strong style={{ float: "right" }}>{String(cm.homeless_exits)}</strong></div>
+                    <div>Services logged <strong style={{ float: "right" }}>{String(cm.services_logged)}</strong></div>
+                    <div>No services <strong style={{ float: "right" }}>{String(cm.zero_services)}</strong></div>
+                    <div>No recent contact <strong style={{ float: "right" }}>{String(cm.no_recent_contact)}</strong></div>
+                    <div>High risk <strong style={{ float: "right" }}>{String(cm.high_risk_clients)}</strong></div>
                   </div>
                 </div>
               ))}

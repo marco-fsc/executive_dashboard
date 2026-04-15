@@ -60,15 +60,15 @@ export default async function ClientsPage({
           <>
             <div className="card" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <div>
-                <strong>Total:</strong> {rows.length}
+                <strong>Total:</strong> {rows.length} clients
               </div>
               <a href={exportHref}>Export Excel</a>
             </div>
 
-            <form method="get" className="card" style={{ display: "grid", gap: 10, gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))" }}>
+            <form method="get" className="card" style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))" }}>
               <label>
                 Program
-                <select name="program" defaultValue={program}>
+                <select name="program" defaultValue={program} style={{ display: "block", marginTop: 4, width: "100%" }}>
                   <option value="">All</option>
                   {programList(ds).map((p) => (
                     <option key={p} value={p}>
@@ -80,7 +80,7 @@ export default async function ClientsPage({
 
               <label>
                 Case Manager
-                <select name="cm" defaultValue={cm}>
+                <select name="cm" defaultValue={cm} style={{ display: "block", marginTop: 4, width: "100%" }}>
                   <option value="">All</option>
                   {cmList(ds, program || null).map((c) => (
                     <option key={c} value={c}>
@@ -92,7 +92,7 @@ export default async function ClientsPage({
 
               <label>
                 Risk
-                <select name="risk" defaultValue={risk}>
+                <select name="risk" defaultValue={risk} style={{ display: "block", marginTop: 4, width: "100%" }}>
                   <option value="">All</option>
                   <option value="High">High</option>
                   <option value="Medium">Medium</option>
@@ -102,30 +102,30 @@ export default async function ClientsPage({
 
               <label>
                 Min days
-                <input type="number" name="min_days" defaultValue={sp.min_days ?? ""} />
+                <input type="number" name="min_days" defaultValue={sp.min_days ?? ""} style={{ display: "block", marginTop: 4, width: "100%" }} />
               </label>
 
               <label>
                 Max days
-                <input type="number" name="max_days" defaultValue={sp.max_days ?? ""} />
+                <input type="number" name="max_days" defaultValue={sp.max_days ?? ""} style={{ display: "block", marginTop: 4, width: "100%" }} />
               </label>
 
-              <label style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              <label style={{ display: "flex", gap: 8, alignItems: "center", fontWeight: 400 }}>
                 <input type="checkbox" name="active_only" value="1" defaultChecked={activeOnly} />
                 Active only
               </label>
 
-              <label style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              <label style={{ display: "flex", gap: 8, alignItems: "center", fontWeight: 400 }}>
                 <input type="checkbox" name="no_services" value="1" defaultChecked={noServices} />
                 No services
               </label>
 
-              <label style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              <label style={{ display: "flex", gap: 8, alignItems: "center", fontWeight: 400 }}>
                 <input type="checkbox" name="no_recent" value="1" defaultChecked={noRecent} />
                 No recent contact (&gt;21d)
               </label>
 
-              <label style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              <label style={{ display: "flex", gap: 8, alignItems: "center", fontWeight: 400 }}>
                 <input type="checkbox" name="approaching_60" value="1" defaultChecked={approaching} />
                 Approaching 60 days
               </label>
@@ -136,45 +136,53 @@ export default async function ClientsPage({
               </div>
             </form>
 
-            <div className="card" style={{ overflowX: "auto" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+            <div className="card" style={{ overflowX: "auto", padding: 0 }}>
+              <table>
                 <thead>
                   <tr>
-                    <th style={{ textAlign: "left" }}>Client ID</th>
-                    <th style={{ textAlign: "left" }}>Program</th>
-                    <th style={{ textAlign: "left" }}>CM</th>
+                    <th>Client ID</th>
+                    <th>Program</th>
+                    <th>Case Manager</th>
                     <th style={{ textAlign: "right" }}>Days In</th>
                     <th style={{ textAlign: "right" }}>Last Svc</th>
                     <th style={{ textAlign: "right" }}>Services</th>
-                    <th style={{ textAlign: "left" }}>Risk</th>
-                    <th style={{ textAlign: "left" }}>Flags</th>
-                    <th style={{ textAlign: "left" }}>Exit</th>
+                    <th>Risk</th>
+                    <th>Flags</th>
+                    <th>Status</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {rows.map((r) => (
-                    <tr key={r.uid}>
-                      <td style={{ fontFamily: "monospace", color: "#666" }}>{r.uid}</td>
-                      <td>{r.program}</td>
-                      <td>{r.cm}</td>
-                      <td style={{ textAlign: "right" }}>{r.days_in_program ?? ""}</td>
-                      <td style={{ textAlign: "right" }}>{r.days_since_service ?? ""}</td>
-                      <td style={{ textAlign: "right" }}>{r.services_count}</td>
-                      <td>{r.risk_level} ({r.risk_score})</td>
-                      <td>{r.flags.join(", ")}</td>
-                      <td>
-                        {r.exit_date ? (
-                          <>
-                            {r.exit_date}
-                            <br />
-                            <span style={{ color: "#666" }}>{r.destination}</span>
-                          </>
-                        ) : (
-                          <span style={{ color: "#0a7" }}>Active</span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
+                  {rows.map((r) => {
+                    const riskClass =
+                      r.risk_level === "High" ? "badge-high" :
+                      r.risk_level === "Medium" ? "badge-medium" : "badge-low";
+                    return (
+                      <tr key={r.uid}>
+                        <td style={{ fontFamily: "monospace", fontSize: 12, color: "var(--color-muted)" }}>{r.uid}</td>
+                        <td>{r.program}</td>
+                        <td>{r.cm}</td>
+                        <td style={{ textAlign: "right" }}>{r.days_in_program ?? ""}</td>
+                        <td style={{ textAlign: "right" }}>{r.days_since_service ?? ""}</td>
+                        <td style={{ textAlign: "right" }}>{r.services_count}</td>
+                        <td>
+                          <span className={`badge ${riskClass}`}>{r.risk_level}</span>
+                          {" "}
+                          <span style={{ fontSize: 11, color: "var(--color-muted)" }}>({r.risk_score})</span>
+                        </td>
+                        <td style={{ fontSize: 12 }}>{r.flags.join(", ") || "—"}</td>
+                        <td>
+                          {r.exit_date ? (
+                            <div>
+                              <div style={{ fontSize: 12 }}>{r.exit_date}</div>
+                              <div style={{ fontSize: 11, color: "var(--color-muted)" }}>{r.destination}</div>
+                            </div>
+                          ) : (
+                            <span className="badge badge-active">Active</span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

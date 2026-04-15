@@ -92,32 +92,32 @@ export default async function DashboardPage({
 
               return (
                 <>
-                  <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>
-                    <div className="card">
-                      <div><strong>Active clients</strong></div>
-                      <div style={{ fontSize: 28 }}>{kpis.total_active}</div>
+                  <div className="kpi-grid" style={{ marginTop: 16 }}>
+                    <div className="kpi-card">
+                      <div className="kpi-label">Active clients</div>
+                      <div className="kpi-value">{kpis.total_active}</div>
                     </div>
-                    <div className="card">
-                      <div><strong>Perm housing exit rate</strong></div>
-                      <div style={{ fontSize: 28 }}>{kpis.perm_housing_pct}%</div>
-                      <div style={{ fontSize: 12, color: "#666" }}>{kpis.perm_housing_exits} of {kpis.total_exits} exits</div>
+                    <div className="kpi-card highlight">
+                      <div className="kpi-label">Perm housing exit rate</div>
+                      <div className="kpi-value">{kpis.perm_housing_pct}%</div>
+                      <div className="kpi-sub">{kpis.perm_housing_exits} of {kpis.total_exits} exits</div>
                     </div>
-                    <div className="card">
-                      <div><strong>No recent contact (&gt;21d)</strong></div>
-                      <div style={{ fontSize: 28 }}>{kpis.no_recent_contact}</div>
+                    <div className="kpi-card">
+                      <div className="kpi-label">No recent contact (&gt;21d)</div>
+                      <div className="kpi-value">{kpis.no_recent_contact}</div>
                     </div>
-                    <div className="card">
-                      <div><strong>CAN positive outcomes</strong></div>
-                      <div style={{ fontSize: 28 }}>{can.positive_exits} ({can.positive_pct}%)</div>
+                    <div className="kpi-card highlight">
+                      <div className="kpi-label">CAN positive outcomes</div>
+                      <div className="kpi-value">{can.positive_exits} <span style={{ fontSize: 18, fontWeight: 400 }}>({can.positive_pct}%)</span></div>
                     </div>
                   </div>
 
                   <div className="card" style={{ overflowX: "auto" }}>
                     <h2 style={{ marginTop: 0, fontSize: 18 }}>Program Summary</h2>
-                    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+                    <table>
                       <thead>
                         <tr>
-                          <th style={{ textAlign: "left" }}>Program</th>
+                          <th>Program</th>
                           <th style={{ textAlign: "right" }}>Active</th>
                           <th style={{ textAlign: "right" }}>Exits</th>
                           <th style={{ textAlign: "right" }}>Perm %</th>
@@ -129,7 +129,7 @@ export default async function DashboardPage({
                       <tbody>
                         {programs.map((r) => (
                           <tr key={String(r.program)}>
-                            <td>{String(r.program)}</td>
+                            <td style={{ fontWeight: 500 }}>{String(r.program)}</td>
                             <td style={{ textAlign: "right" }}>{String(r.active)}</td>
                             <td style={{ textAlign: "right" }}>{String(r.exits)}</td>
                             <td style={{ textAlign: "right" }}>{String(r.perm_pct)}%</td>
@@ -144,9 +144,9 @@ export default async function DashboardPage({
 
                   <div className="card">
                     <h2 style={{ marginTop: 0, fontSize: 18 }}>Services Provided (top)</h2>
-                    <div style={{ display: "grid", gap: 8 }}>
+                    <div>
                       {svc.slice(0, 12).map((s) => (
-                        <div key={s.name} style={{ display: "flex", justifyContent: "space-between" }}>
+                        <div key={s.name} className="service-row">
                           <span>{s.name}</span>
                           <strong>{s.count}</strong>
                         </div>
