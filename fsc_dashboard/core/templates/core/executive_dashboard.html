@@ -1,0 +1,492 @@
+{% extends "core/base.html" %}
+{% block title %}Executive Dashboard — FSC{% endblock %}
+{% block nav_exec %}active{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4 class="mb-0 fw-bold"><i class="bi bi-speedometer2 me-2"></i>Executive Dashboard</h4>
+  <div>
+    <a href="{% url 'export' %}?format=excel&report=executive&range={{ selected_range }}{% if selected_program %}&program={{ selected_program|urlencode }}{% endif %}" class="btn btn-sm btn-outline-success me-2">
+      <i class="bi bi-file-earmark-excel me-1"></i>Export Excel
+    </a>
+    <a href="{% url 'export' %}?format=pdf&report=executive&range={{ selected_range }}{% if selected_program %}&program={{ selected_program|urlencode }}{% endif %}" class="btn btn-sm btn-outline-danger">
+      <i class="bi bi-file-earmark-pdf me-1"></i>Export PDF
+    </a>
+  </div>
+</div>
+
+<!-- ── Sticky Filter Bar ──────────────────────────────────────────────────── -->
+<div class="sticky-top" style="top:56px; z-index:100;">
+  <div class="card border-0 shadow mb-3" style="background:#1e5128;">
+    <div class="card-body py-2 px-3">
+      <form method="get" id="filterForm" class="d-flex align-items-center gap-3 flex-wrap">
+        <i class="bi bi-funnel text-warning"></i>
+        <div class="d-flex align-items-center gap-2">
+          <label class="fw-semibold small text-white mb-0 text-nowrap">Program</label>
+          <select name="program" class="form-select form-select-sm" style="min-width:220px;max-width:340px;"
+                  onchange="document.getElementById('filterForm').submit()">
+            <option value="">All Programs</option>
+            {% for p in programs_list %}
+            <option value="{{ p }}" {% if selected_program == p %}selected{% endif %}>{{ p }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          <label class="fw-semibold small text-white mb-0 text-nowrap">Date Range</label>
+          <div class="btn-group btn-group-sm" role="group">
+            <input type="radio" class="btn-check" name="range" value="1" id="range1"
+                   {% if selected_range == '1' %}checked{% endif %} onchange="this.form.submit()">
+            <label class="btn btn-outline-warning" for="range1">1 Mo</label>
+            <input type="radio" class="btn-check" name="range" value="6" id="range6"
+                   {% if selected_range == '6' or selected_range == '' %}checked{% endif %} onchange="this.form.submit()">
+            <label class="btn btn-outline-warning" for="range6">6 Mo</label>
+            <input type="radio" class="btn-check" name="range" value="18" id="range18"
+                   {% if selected_range == '18' %}checked{% endif %} onchange="this.form.submit()">
+            <label class="btn btn-outline-warning" for="range18">18 Mo</label>
+          </div>
+        </div>
+        {% if selected_program or selected_range != '6' %}
+        <a href="{% url 'executive_dashboard' %}" class="btn btn-sm btn-link text-warning p-0">
+          <i class="bi bi-x-circle me-1"></i>Reset
+        </a>
+        {% endif %}
+        <span class="ms-auto small text-white-50 fst-italic">
+          {{ range_label }}{% if selected_program %} &middot; {{ selected_program }}{% endif %}
+        </span>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ── KPI Cards ─────────────────────────────────────────────────────────── -->
+<div class="row g-3 mb-4">
+
+  <div class="col-6 col-md-3 col-xl-2">
+    <a href="{% url 'client_list' %}?active_only=1{% if selected_program %}&program={{ selected_program|urlencode }}{% endif %}" class="text-decoration-none">
+      <div class="kpi-card kpi-drillable">
+        <div class="kpi-value">{{ kpis.total_active }}</div>
+        <div class="kpi-label">Active Clients <i class="bi bi-arrow-right-short"></i></div>
+      </div>
+    </a>
+  </div>
+
+  <div class="col-6 col-md-3 col-xl-2">
+    <div class="kpi-card success">
+      <div class="kpi-value text-success">{{ kpis.perm_housing_pct }}%</div>
+      <div class="kpi-label">Exits → Permanent Housing</div>
+      <small class="text-muted">{{ kpis.perm_housing_exits }} of {{ kpis.total_exits }} exits</small>
+    </div>
+  </div>
+
+  <div class="col-6 col-md-3 col-xl-2">
+    <div class="kpi-card danger">
+      <div class="kpi-value text-danger">{{ kpis.homeless_exit_pct }}%</div>
+      <div class="kpi-label">Exits → Homelessness</div>
+      <small class="text-muted">{{ kpis.homeless_exits }} of {{ kpis.total_exits }} exits</small>
+    </div>
+  </div>
+
+  <div class="col-6 col-md-3 col-xl-2">
+    <a href="{% url 'client_list' %}?active_only=1&min_days=90{% if selected_program %}&program={{ selected_program|urlencode }}{% endif %}" class="text-decoration-none">
+      <div class="kpi-card warning kpi-drillable">
+        <div class="kpi-value text-warning">{{ kpis.long_stay_pct }}%</div>
+        <div class="kpi-label">Long Stay ≥ 90 Days <i class="bi bi-arrow-right-short"></i></div>
+        <small class="text-muted">{{ kpis.long_stay_count }} clients</small>
+      </div>
+    </a>
+  </div>
+
+  <div class="col-6 col-md-3 col-xl-2">
+    <a href="{% url 'client_list' %}?active_only=1&approaching_60=1{% if selected_program %}&program={{ selected_program|urlencode }}{% endif %}" class="text-decoration-none">
+      <div class="kpi-card warning kpi-drillable">
+        <div class="kpi-value">{{ kpis.approaching_60_days }}</div>
+        <div class="kpi-label">Approaching 60 Days <i class="bi bi-arrow-right-short"></i></div>
+        <small class="text-muted">45–75 day range</small>
+      </div>
+    </a>
+  </div>
+
+  <div class="col-6 col-md-3 col-xl-2">
+    <a href="{% url 'client_list' %}?active_only=1&no_services=1{% if selected_program %}&program={{ selected_program|urlencode }}{% endif %}" class="text-decoration-none">
+      <div class="kpi-card danger kpi-drillable">
+        <div class="kpi-value text-danger">{{ kpis.zero_services_active }}</div>
+        <div class="kpi-label">Active / No Services <i class="bi bi-arrow-right-short"></i></div>
+      </div>
+    </a>
+  </div>
+
+  <div class="col-6 col-md-3 col-xl-2">
+    <a href="{% url 'client_list' %}?active_only=1&no_recent=1{% if selected_program %}&program={{ selected_program|urlencode }}{% endif %}" class="text-decoration-none">
+      <div class="kpi-card warning kpi-drillable">
+        <div class="kpi-value">{{ kpis.no_recent_contact }}</div>
+        <div class="kpi-label">No Contact > 21 Days <i class="bi bi-arrow-right-short"></i></div>
+      </div>
+    </a>
+  </div>
+
+  <div class="col-6 col-md-3 col-xl-2">
+    <div class="kpi-card">
+      <div class="kpi-value">{{ kpis.avg_cm_load }}</div>
+      <div class="kpi-label">Avg CM Caseload</div>
+      <small class="text-muted">Max: {{ kpis.max_cm_load }}</small>
+    </div>
+  </div>
+
+  <div class="col-6 col-md-3 col-xl-2">
+    <div class="kpi-card kpi-drillable" data-bs-toggle="modal" data-bs-target="#losModal" style="cursor:pointer;">
+      <div class="kpi-value">{{ kpis.avg_length_of_stay }}</div>
+      <div class="kpi-label">Avg Length of Stay <i class="bi bi-bar-chart-line ms-1"></i></div>
+      <small class="text-muted">click to see distribution</small>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── Charts row ────────────────────────────────────────────────────────── -->
+<div class="row g-3 mb-4">
+
+  <div class="col-md-6">
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        <h6 class="card-title text-muted fw-semibold">
+          Positive Exits by Program
+          <small class="fw-normal ms-1">— {{ range_label }}</small>
+        </h6>
+        <div class="chart-container"><canvas id="exitsBarChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6">
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        <h6 class="card-title text-muted fw-semibold">Active Clients by Program</h6>
+        <div class="chart-container"><canvas id="activeChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── Positive Outcomes Trend ────────────────────────────────────────────── -->
+<div class="row g-3 mb-4">
+
+  <div class="col-md-9">
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        <h6 class="card-title fw-semibold">
+          Positive Outcomes Trend — {{ range_label }}
+          <small class="text-muted fw-normal ms-2">(housing programs only · distinct clients · CAN shown separately below)</small>
+        </h6>
+        {% if is_forecast %}
+        <div class="alert alert-info py-1 px-2 mb-2" style="font-size:.8rem;">
+          <i class="bi bi-star-fill text-warning me-1"></i><strong>★ = projected</strong> — current month is extrapolated from pace so far this month.
+        </div>
+        {% endif %}
+        <div style="position:relative; height:260px;"><canvas id="trendChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-3">
+    <div class="card shadow-sm h-100" style="border-left:4px solid #f5e642;">
+      <div class="card-body d-flex flex-column">
+        <h6 class="fw-bold mb-0" style="color:#1e5128;">
+          <i class="bi bi-signpost-split me-1" style="color:#f5e642;"></i>CAN Team Outreach
+        </h6>
+        <small class="text-muted mb-3">{{ range_label }} — community navigation</small>
+
+        <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-2">
+          <span class="small text-muted">Currently Active</span>
+          <span class="fw-bold fs-5" style="color:#1e5128;">{{ can_kpis.active_navigations }}</span>
+        </div>
+        <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-2">
+          <span class="small text-muted">Clients Navigated</span>
+          <span class="fw-bold fs-5" style="color:#1e5128;">{{ can_kpis.total_exits }}</span>
+        </div>
+        <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-2">
+          <span class="small text-muted">Positive Outcomes</span>
+          <span class="fw-bold fs-5 text-success">{{ can_kpis.positive_exits }}
+            <small class="fs-6 text-muted fw-normal">({{ can_kpis.positive_pct }}%)</small>
+          </span>
+        </div>
+        <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-2">
+          <span class="small text-muted">→ Shelter Connected</span>
+          <span class="fw-semibold">{{ can_kpis.shelter_connected }}</span>
+        </div>
+        <div class="d-flex justify-content-between align-items-center">
+          <span class="small text-muted">→ Permanent Housing</span>
+          <span class="fw-semibold text-success">{{ can_kpis.perm_housing }}</span>
+        </div>
+
+        <div class="mt-3">
+          <div style="position:relative; height:110px;"><canvas id="canChart"></canvas></div>
+          <small id="canTotal" class="text-muted d-block text-center mt-1"></small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── Services Section ─────────────────────────────────────────────────── -->
+<div class="card shadow-sm mb-4">
+  <div class="card-body">
+    <div class="mb-3">
+      <h6 class="card-title fw-semibold mb-0">Services Provided</h6>
+      <small class="text-muted">{{ range_label }}{% if selected_program %} &middot; {{ selected_program }}{% endif %} — total service events</small>
+    </div>
+    <div class="row g-3">
+      {% for s in svc_counts %}
+      <div class="col-6 col-md-4 col-lg-3">
+        <div class="svc-tile">
+          <div class="svc-count">{{ s.count|floatformat:"0" }}</div>
+          <div class="svc-name">{{ s.name }}</div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<!-- ── Program table ─────────────────────────────────────────────────────── -->
+<div class="card shadow-sm mb-4">
+  <div class="card-body">
+    <div class="d-flex align-items-baseline gap-2 mb-3">
+      <h6 class="card-title fw-semibold mb-0">Program Summary</h6>
+      <small class="text-muted">exits shown for <strong>{{ range_label }}</strong>{% if selected_program %} &middot; {{ selected_program }}{% endif %}</small>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-hover table-sm align-middle mb-0">
+        <thead class="table-dark">
+          <tr>
+            <th>Program</th>
+            <th class="text-end">Active</th>
+            <th class="text-end">Exits</th>
+            <th class="text-end">→ Permanent</th>
+            <th class="text-end">Positive Exits</th>
+            <th class="text-end">→ Homeless</th>
+            <th class="text-end">Avg LOS</th>
+            <th class="text-end">CMs</th>
+            <th class="text-end">Avg Load</th>
+            <th class="text-end">No Services</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in programs %}
+          <tr>
+            <td>
+              <a href="{% url 'supervisor_dashboard' %}?program={{ p.program|urlencode }}" class="text-decoration-none">
+                {{ p.program }}
+              </a>
+            </td>
+            <td class="text-end">{{ p.active }}</td>
+            <td class="text-end">{{ p.exits }}</td>
+            <td class="text-end">
+              <span class="{% if p.perm_pct >= 30 %}text-success fw-semibold{% elif p.perm_pct == 0 %}text-muted{% endif %}">
+                {{ p.perm_exits }} <small class="text-muted">({{ p.perm_pct }}%)</small>
+              </span>
+            </td>
+            <td class="text-end">
+              <span class="{% if p.positive_pct >= 40 %}text-success fw-semibold{% elif p.positive_pct == 0 %}text-muted{% endif %}">
+                {{ p.positive_exits }} <small class="text-muted">({{ p.positive_pct }}%)</small>
+              </span>
+            </td>
+            <td class="text-end">
+              <span class="{% if p.homeless_exits > p.perm_exits %}text-danger fw-semibold{% endif %}">
+                {{ p.homeless_exits }}
+              </span>
+            </td>
+            <td class="text-end">{{ p.avg_los }}d</td>
+            <td class="text-end">{{ p.cms }}</td>
+            <td class="text-end">
+              <span class="{% if p.avg_cm_load > 25 %}text-danger fw-semibold{% endif %}">{{ p.avg_cm_load }}</span>
+            </td>
+            <td class="text-end">
+              <span class="{% if p.zero_services > 0 %}text-danger fw-semibold{% endif %}">{{ p.zero_services }}</span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+<!-- ── Length of Stay Modal ──────────────────────────────────────────────── -->
+<div class="modal fade" id="losModal" tabindex="-1" aria-labelledby="losModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header" style="background:#1e5128;">
+        <h5 class="modal-title text-white fw-semibold" id="losModalLabel">
+          <i class="bi bi-bar-chart-line me-2"></i>Length of Stay — Active Clients
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p class="text-muted small mb-3">Distribution of current days-in-project for all active clients{% if selected_program %} in {{ selected_program }}{% endif %}. Average: <strong>{{ kpis.avg_length_of_stay }} days</strong>.</p>
+        <div style="position:relative;height:300px;"><canvas id="losChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% block extra_js %}
+<script>
+const CHART_COLORS = ['#1e5128','#2d7a3a','#f5e642','#fd7e14','#6610f2','#0dcaf0','#dc3545','#6c757d'];
+
+// Positive exits by program — simple bar
+(function(){
+  const raw = {{ exits_bar_chart_json|safe }};
+  new Chart(document.getElementById('exitsBarChart'), {
+    type: 'bar',
+    data: {
+      labels: raw.labels,
+      datasets: [{
+        label: 'Positive Exits',
+        data: raw.data,
+        backgroundColor: raw.colors.map(c => c + 'cc'),
+        borderColor: raw.colors,
+        borderWidth: 1,
+        borderRadius: 5,
+      }]
+    },
+    options: {
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => ` ${ctx.parsed.y} positive exits` } }
+      },
+      scales: {
+        x: { ticks: { font: { size: 10 }, maxRotation: 30 } },
+        y: { beginAtZero: true, ticks: { precision: 0 } }
+      },
+      maintainAspectRatio: false
+    }
+  });
+})();
+
+// Positive outcomes trend — multi-line
+(function(){
+  const raw = {{ trend_chart_json|safe }};
+  // Style last point as hollow forecast if this is a partial month
+  if (raw.is_forecast && raw.datasets.length) {
+    raw.datasets.forEach(ds => {
+      const n = ds.data.length;
+      if (!n) return;
+      ds.pointBackgroundColor = Array(n).fill(ds.borderColor);
+      ds.pointBackgroundColor[n - 1] = 'transparent';
+      ds.pointBorderColor = Array(n).fill(ds.borderColor);
+      const baseR = ds.label === 'All Programs' ? 5 : 4;
+      ds.pointRadius = Array(n).fill(baseR);
+      ds.pointRadius[n - 1] = baseR + 4;
+      ds.pointBorderWidth = Array(n).fill(1);
+      ds.pointBorderWidth[n - 1] = 2.5;
+      ds.segment = { borderDash: ctx => ctx.p1DataIndex === n - 1 ? [6, 3] : [] };
+    });
+  }
+  // Keep "All Programs" visually prominent regardless of forecast
+  if (raw.datasets.length && raw.datasets[0].label === 'All Programs') {
+    const all = raw.datasets[0];
+    all.borderWidth = 2.5;
+    all.pointRadius = (all.pointRadius instanceof Array) ? all.pointRadius : Array(all.data.length).fill(5);
+    all.order = 0;
+  }
+  new Chart(document.getElementById('trendChart'), {
+    type: 'line',
+    data: { labels: raw.labels, datasets: raw.datasets },
+    options: {
+      plugins: {
+        legend: { position: 'bottom', labels: { font: { size: 10 }, boxWidth: 12,
+          filter: item => item.text === 'All Programs'
+            ? (item.lineWidth = 2.5, true) : true
+        } },
+        tooltip: {
+          callbacks: {
+            title: (items) => {
+              const lbl = items[0]?.label || '';
+              return lbl.includes('★') ? lbl + ' (projected)' : lbl;
+            }
+          }
+        }
+      },
+      scales: {
+        y: { beginAtZero: true, ticks: { precision: 0 } },
+        x: { ticks: { font: { size: 10 } } }
+      },
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false }
+    }
+  });
+})();
+
+// CAN navigations mini-line
+(function(){
+  const raw = {{ can_chart_json|safe }};
+  document.getElementById('canTotal').textContent =
+    raw.total_navigations + ' clients navigated ({{ range_label|lower }})';
+  if (raw.is_forecast && raw.datasets.length) {
+    raw.datasets.forEach(ds => {
+      const n = ds.data.length;
+      if (!n) return;
+      ds.pointBackgroundColor = Array(n).fill(ds.borderColor);
+      ds.pointBackgroundColor[n - 1] = 'transparent';
+      ds.pointBorderColor = Array(n).fill(ds.borderColor);
+      ds.pointRadius = Array(n).fill(3);
+      ds.pointRadius[n - 1] = 7;
+      ds.pointBorderWidth = Array(n).fill(1);
+      ds.pointBorderWidth[n - 1] = 2;
+      ds.segment = { borderDash: ctx => ctx.p1DataIndex === n - 1 ? [5, 3] : [] };
+    });
+  }
+  new Chart(document.getElementById('canChart'), {
+    type: 'line',
+    data: { labels: raw.labels, datasets: raw.datasets },
+    options: {
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { beginAtZero: true, ticks: { precision: 0, font: { size: 9 } } },
+        x: { ticks: { font: { size: 9 }, maxRotation: 45 } }
+      },
+      maintainAspectRatio: false
+    }
+  });
+})();
+
+// LOS histogram
+(function(){
+  const raw = {{ los_chart_json|safe }};
+  new Chart(document.getElementById('losChart'), {
+    type: 'bar',
+    data: {
+      labels: raw.labels,
+      datasets: [{ data: raw.data, backgroundColor: '#2d7a3a', borderRadius: 4 }]
+    },
+    options: {
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true } },
+      maintainAspectRatio: false
+    }
+  });
+})();
+
+// Active by program horizontal bar
+(function(){
+  const raw = {{ active_chart_json|safe }};
+  new Chart(document.getElementById('activeChart'), {
+    type: 'bar',
+    data: {
+      labels: raw.labels,
+      datasets: [{ data: raw.data, backgroundColor: CHART_COLORS, borderRadius: 4 }]
+    },
+    options: {
+      indexAxis: 'y',
+      plugins: { legend: { display: false } },
+      scales: { x: { beginAtZero: true } },
+      maintainAspectRatio: false
+    }
+  });
+})();
+</script>
+{% endblock %}

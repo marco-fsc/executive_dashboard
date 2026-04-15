@@ -1,0 +1,39 @@
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+
+# ── Virtual environments ──────────────────────────────────────────────────────
+.venv/
+venv/
+env/
+
+# ── Django ────────────────────────────────────────────────────────────────────
+db.sqlite3
+*.log
+local_settings.py
+
+# ── Client data (NEVER commit) ────────────────────────────────────────────────
+# The data/ directory contains hashed client records and the HMAC salt.
+# Without the salt file, uid_hash values cannot be reversed.
+data/.salt
+data/enrollments.csv
+data/services.csv
+data/*.csv
+
+# Keep the directory itself tracked
+!data/.gitkeep
+
+# Raw HMIS CSV exports (service-level, contains UIDs before hashing)
+*.csv
+
+# ── OS / editor ───────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+.vscode/
+*.swp

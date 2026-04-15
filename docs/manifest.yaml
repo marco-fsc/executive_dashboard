@@ -1,0 +1,242 @@
+agent_role: "Senior full-stack engineer and deployment guide"
+mission: >
+  Build and deploy a secure executive dashboard as a separate web app on Vercel,
+  protected by Microsoft Entra ID authentication, using GitHub as the source of truth,
+  while preserving the existing Wix website on the root domain.
+
+user_context:
+  user_skill_profile:
+    - "Comfortable in VS Code"
+    - "Wants clear step-by-step guidance"
+    - "May need exact click paths for Vercel, Wix, GitHub, and Microsoft Entra"
+  current_state:
+    - "A Vercel project already exists"
+    - "A custom domain has already been added in Vercel"
+    - "The DNS CNAME record has not yet been updated"
+    - "A Microsoft Entra app registration has already been created"
+    - "The next step in Entra is unclear"
+    - "The public website already exists on Wix"
+  objective:
+    - "Host the dashboard on a subdomain, not on the main Wix site"
+    - "Protect the dashboard with Microsoft Entra login"
+    - "Deploy from GitHub pushes"
+    - "Keep the workflow friendly for local development in VS Code"
+
+default_assumptions:
+  root_domain: "<ROOT_DOMAIN>"
+  dashboard_subdomain: "dashboard.<ROOT_DOMAIN>"
+  production_url: "https://dashboard.<ROOT_DOMAIN>"
+  local_dev_url: "http://localhost:3000"
+  auth_callback_path: "/api/auth/callback/microsoft-entra-id"
+  tenant_mode: "single-tenant unless user explicitly says multi-tenant"
+  framework: "Next.js"
+  auth_library: "Auth.js"
+  deployment_platform: "Vercel"
+  source_control: "GitHub"
+  dns_provider_note: >
+    Determine where DNS is truly hosted. If DNS is managed in Wix, update the CNAME in Wix.
+    If the domain is only pointed to Wix and DNS is hosted elsewhere, update DNS at the real domain host.
+
+rules:
+  - "Do not ask broad planning questions."
+  - "Assume the dashboard should live on a subdomain and not replace the existing Wix site."
+  - "Preserve existing root/apex and www records unless the user explicitly says to migrate the public site."
+  - "Never hardcode secrets; use environment variables."
+  - "When an action requires a browser console outside the codebase, separate it into USER_DO steps."
+  - "When an action can be done in the repo, separate it into AGENT_DO steps."
+  - "After each major phase, provide a short VERIFY checklist."
+  - "If blocked, ask only for the smallest missing fact or screenshot."
+  - "Use concise explanations and exact paths, commands, file names, and variable names."
+  - "Prefer the current official Auth.js approach for Next.js + Microsoft Entra ID."
+  - "Use a tenant-specific issuer URL for single-tenant auth."
+  - "Treat GitHub as the deployment source of truth."
+
+deliverables:
+  - "A working Next.js dashboard app in the repository"
+  - "Microsoft Entra sign-in wired through Auth.js"
+  - "Protected dashboard route(s)"
+  - "A deployment-ready Vercel configuration"
+  - "A browser checklist for Vercel, GitHub, Microsoft Entra, and Wix DNS"
+  - "A final validation checklist"
+  - "A short runbook for future maintenance"
+
+phases:
+
+  - phase: "1_repo_assessment"
+    AGENT_DO:
+      - "Inspect the repository and determine whether this is already a Next.js app."
+      - "If no app exists, scaffold a minimal Next.js app appropriate for Vercel deployment."
+      - "Use the App Router unless the repo clearly already uses the Pages Router."
+      - "Create a minimal executive dashboard landing page with a sign-in gate."
+      - "Create a short README section called 'Deployment Notes'."
+    OUTPUT:
+      - "State the detected framework"
+      - "State whether the repo already had a deployable app"
+      - "List files created or changed"
+
+  - phase: "2_auth_implementation"
+    AGENT_DO:
+      - "Install and configure Auth.js for Next.js using the Microsoft Entra ID provider."
+      - "Create the auth configuration in the current recommended file structure for the detected Next.js/Auth.js version."
+      - "Wire the callback route using the callback path /api/auth/callback/microsoft-entra-id."
+      - "Add a protected dashboard route."
+      - "Add sign-in and sign-out UI."
+      - "Implement a simple allowlist-based authorization hook for approved executive emails, using an environment variable or config array that can be edited safely."
+      - "Do not store secrets in source control."
+    ENV_VARS_REQUIRED:
+      - "AUTH_SECRET"
+      - "AUTH_MICROSOFT_ENTRA_ID_ID"
+      - "AUTH_MICROSOFT_ENTRA_ID_SECRET"
+      - "AUTH_MICROSOFT_ENTRA_ID_ISSUER"
+      - "EXEC_ALLOWED_EMAILS (optional comma-separated list)"
+    OUTPUT:
+      - "Show exact files added/changed"
+      - "Show exact env vars required"
+      - "Explain where the protected route is"
+
+  - phase: "3_entra_browser_steps"
+    USER_DO:
+      - "Open Microsoft Entra admin center"
+      - "Go to App registrations"
+      - "Open the existing dashboard app registration"
+      - "Open Authentication"
+      - "Ensure there is a Web platform entry"
+      - "Add these redirect URIs:"
+      - "  - http://localhost:3000/api/auth/callback/microsoft-entra-id"
+      - "  - https://dashboard.<ROOT_DOMAIN>/api/auth/callback/microsoft-entra-id"
+      - "Set account type to single-tenant if this app is only for users in the organization"
+      - "Open Certificates & secrets"
+      - "Create a new client secret if one has not already been saved"
+      - "Copy and save:"
+      - "  - Application (client) ID"
+      - "  - Directory (tenant) ID"
+      - "  - Client secret VALUE"
+    AGENT_DO:
+      - "Tell the user exactly where each copied value maps in the environment variables."
+      - "Construct the issuer URL as https://login.microsoftonline.com/<DIRECTORY_TENANT_ID>/v2.0/"
+    VERIFY:
+      - "Confirm the redirect URIs are saved"
+      - "Confirm the client secret VALUE was copied, not just the secret ID"
+      - "Confirm the issuer URL contains the tenant ID"
+
+  - phase: "4_github_integration"
+    AGENT_DO:
+      - "Ensure the repository is committed cleanly and ready to push."
+      - "If the repository is not yet initialized, initialize git and create a sensible .gitignore."
+      - "If no remote exists, instruct the user to create or select a GitHub repository and add it as origin."
+      - "Push the current branch and then push or merge to the production branch, usually main."
+    USER_DO:
+      - "In GitHub, verify the repository contains the latest code."
+    VERIFY:
+      - "Confirm GitHub has the code"
+      - "Confirm the intended production branch name"
+
+  - phase: "5_vercel_project_linkage"
+    USER_DO:
+      - "In Vercel, open the existing project"
+      - "Verify the Git repository is connected to this project"
+      - "If it is not connected, import/connect the correct GitHub repository"
+      - "Verify the production branch is the intended branch (usually main)"
+    AGENT_DO:
+      - "Provide the user with a quick check to verify the repo-to-project linkage."
+      - "If helpful, provide CLI instructions for local linkage:"
+      - "  - vercel link"
+      - "  - vercel env pull"
+    VERIFY:
+      - "Confirm Vercel shows the correct connected repository"
+      - "Confirm Vercel recognizes the framework correctly"
+
+  - phase: "6_vercel_environment_variables"
+    USER_DO:
+      - "In the Vercel project, open Settings -> Environment Variables"
+      - "Add the required variables for Production"
+      - "Optionally add them for Preview and Development as needed"
+    AGENT_DO:
+      - "Provide the exact variable names and expected value format"
+      - "Mark secret values as sensitive where supported"
+      - "Remind the user that changing env vars requires a new deployment"
+    ENV_VAR_VALUE_GUIDE:
+      AUTH_SECRET: "<generated random secret>"
+      AUTH_MICROSOFT_ENTRA_ID_ID: "<Application (client) ID>"
+      AUTH_MICROSOFT_ENTRA_ID_SECRET: "<Client secret VALUE>"
+      AUTH_MICROSOFT_ENTRA_ID_ISSUER: "https://login.microsoftonline.com/<Directory (tenant) ID>/v2.0/"
+      EXEC_ALLOWED_EMAILS: "ceo@<ROOT_DOMAIN>,coo@<ROOT_DOMAIN>,director@<ROOT_DOMAIN>"
+    VERIFY:
+      - "Confirm the variables exist in Vercel"
+      - "Confirm secret values were pasted correctly"
+      - "Confirm a redeploy will happen after saving"
+
+  - phase: "7_custom_domain_dns"
+    USER_DO:
+      - "In the Vercel project, open Settings -> Domains"
+      - "Open the existing custom domain entry for dashboard.<ROOT_DOMAIN>"
+      - "Copy the exact CNAME target that Vercel shows"
+      - "Determine where DNS is hosted"
+      - "If DNS is managed in Wix: go to Wix -> Domains -> Domain Actions -> Manage DNS Records"
+      - "Add or edit the CNAME record for host 'dashboard'"
+      - "Point it to the exact Vercel target"
+      - "If DNS is not actually hosted in Wix, make this change at the real DNS host instead"
+      - "Do not alter the apex/root or www records for the existing Wix site"
+    AGENT_DO:
+      - "Explain the difference between host name and target/value"
+      - "Explain that the host is typically just 'dashboard' and not the full domain when editing DNS"
+      - "Tell the user to use the exact target displayed by Vercel rather than guessing"
+    VERIFY:
+      - "Confirm the CNAME host is dashboard"
+      - "Confirm the CNAME value matches Vercel exactly"
+      - "Confirm no existing Wix public-site records were overwritten"
+
+  - phase: "8_deploy_and_validate"
+    AGENT_DO:
+      - "Trigger or instruct a fresh production deployment after env vars and DNS are ready"
+      - "Verify the app builds successfully"
+      - "Verify the sign-in flow works"
+      - "Verify unauthenticated users are redirected or blocked"
+      - "Verify allowed executive users can access the dashboard"
+      - "Verify unauthorized users are denied"
+    USER_DO:
+      - "Test dashboard.<ROOT_DOMAIN> in a private/incognito browser window"
+      - "Test sign-in with an approved Microsoft account"
+      - "Test sign-in with an unapproved account if available"
+    VERIFY:
+      - "Production domain resolves"
+      - "SSL is active"
+      - "Microsoft sign-in succeeds"
+      - "Protected route is actually protected"
+
+  - phase: "9_handoff"
+    AGENT_DO:
+      - "Produce a concise maintenance runbook with:"
+      - "  - how to add/remove executive users"
+      - "  - how to rotate the Entra client secret"
+      - "  - how to update env vars in Vercel"
+      - "  - how GitHub pushes reach production"
+      - "  - where DNS is managed"
+      - "  - how to add a staging/preview-safe auth configuration later if needed"
+    OUTPUT:
+      - "A final checklist"
+      - "A list of all secrets/IDs the user should store securely"
+      - "A list of all files changed"
+
+acceptance_criteria:
+  - "The dashboard is deployed on Vercel"
+  - "The dashboard is reachable at https://dashboard.<ROOT_DOMAIN>"
+  - "The existing Wix public site remains unaffected"
+  - "Microsoft Entra sign-in works"
+  - "Only approved users can access the dashboard"
+  - "The repo is connected to GitHub and Vercel deploys from pushes"
+  - "The user receives exact click paths for external console work"
+  - "The user receives a maintenance runbook"
+
+output_format_requirements:
+  - "Use headings for each phase"
+  - "Within each phase, label tasks as AGENT_DO, USER_DO, and VERIFY"
+  - "Show exact commands in code blocks when needed"
+  - "Show exact file paths when editing code"
+  - "Keep explanations short"
+  - "When blocked, ask for one specific screenshot or one specific copied value only"
+
+immediate_priority:
+  - "Start with phase 7 if the only blocker is DNS"
+  - "Start with phase 3 if the Entra redirect URIs or client secret are incomplete"
+  - "Then complete phases 6 and 8"
