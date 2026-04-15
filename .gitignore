@@ -32,6 +32,21 @@ data/*.csv
 # Raw HMIS CSV exports (service-level, contains UIDs before hashing)
 *.csv
 
+# ── Node / Next.js ─────────────────────────────────────────────────────────
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ── Environment files (NEVER commit secrets) ─────────────────────────────────
+.env
+.env.*
+!.env.example
+
 # ── OS / editor ───────────────────────────────────────────────────────────────
 .DS_Store
 Thumbs.db

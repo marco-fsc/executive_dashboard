@@ -148,6 +148,39 @@ Current snapshot: **~722 rows · 6 programs · ~518 active clients · 38 case ma
 
 ---
 
+## Deployment Notes (Vercel + Microsoft Entra ID)
+
+This repo contains **two apps**:
+
+- Django (existing): [fsc_dashboard/manage.py](manage.py)
+- Next.js (new, for Vercel subdomain deployment): [dashboard/](../dashboard/)
+
+### Local dev (Next.js app)
+```bash
+cd dashboard
+npm install
+npm run dev
+```
+Visit http://localhost:3000
+
+### Vercel settings
+- **Root Directory**: `dashboard`
+- **Build Command**: `npm run build`
+- **Output Directory**: (leave default)
+
+### Required environment variables (Vercel + local)
+- `AUTH_SECRET`
+- `AUTH_MICROSOFT_ENTRA_ID_ID`
+- `AUTH_MICROSOFT_ENTRA_ID_SECRET`
+- `AUTH_MICROSOFT_ENTRA_ID_ISSUER` (single-tenant: `https://login.microsoftonline.com/<TENANT_ID>/v2.0/`)
+- `EXEC_ALLOWED_EMAILS` (comma-separated; required in production)
+
+### Entra redirect URIs
+- `http://localhost:3000/api/auth/callback/microsoft-entra-id`
+- `https://dashboard.<ROOT_DOMAIN>/api/auth/callback/microsoft-entra-id`
+
+---
+
 ## License
 
 Internal use — First Step Communities.
