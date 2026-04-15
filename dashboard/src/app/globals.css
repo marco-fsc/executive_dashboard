@@ -217,10 +217,10 @@ label {
 }
 
 .topnav-logo {
-  height: 36px;
+  height: 38px;
   width: auto;
-  border-radius: 6px;
-  margin-right: 8px;
+  border-radius: 4px;
+  margin-right: 12px;
 }
 
 .topnav-brand {

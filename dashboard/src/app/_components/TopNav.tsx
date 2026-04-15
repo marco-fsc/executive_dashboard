@@ -6,10 +6,10 @@ export function TopNav({ email }: { email: string | null }) {
     <nav className="topnav">
       <div className="topnav-inner">
         <Image
-          src="/fsc_logo.avif"
+          src="/fsc_logo.png"
           alt="FSC logo"
-          width={36}
-          height={36}
+          width={120}
+          height={45}
           className="topnav-logo"
           priority
         />
