@@ -51,13 +51,6 @@ export const {
         user?.email ??
         "";
 
-      // Debug: log to Vercel function logs (remove after auth is working)
-      console.log("[auth] signIn profile:", JSON.stringify(profile, null, 2));
-      console.log("[auth] signIn user:", JSON.stringify(user));
-      console.log("[auth] resolved email:", JSON.stringify(email));
-      console.log("[auth] allowList:", JSON.stringify(allowList));
-      console.log("[auth] isAllowed:", isAllowed(email, allowList));
-
       // If you don't set EXEC_ALLOWED_EMAILS, deny sign-in in production.
       if (allowList.length === 0) {
         return process.env.NODE_ENV !== "production";

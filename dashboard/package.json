@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "push-data": "tsx scripts/push-dataset.ts"
   },
   "dependencies": {
     "@vercel/blob": "^2.3.3",
@@ -22,6 +23,7 @@
     "@types/papaparse": "^5.5.2",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "tsx": "^4.21.0",
     "typescript": "^5.6.0"
   }
 }
