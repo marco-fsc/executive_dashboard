@@ -1,12 +1,27 @@
 import NextAuth from "next-auth";
 import MicrosoftEntraID from "next-auth/providers/microsoft-entra-id";
 
-function parseAllowedEmails(): string[] {
+/** Comma-separated list of allowed email addresses or @domain patterns. */
+function parseAllowList(): string[] {
   const raw = process.env.EXEC_ALLOWED_EMAILS ?? "";
   return raw
     .split(",")
     .map((s) => s.trim().toLowerCase())
     .filter(Boolean);
+}
+
+function isAllowed(email: string, allowList: string[]): boolean {
+  const lower = email.toLowerCase();
+  for (const entry of allowList) {
+    if (entry.startsWith("@")) {
+      // Domain match: "@firststepcommunities.org"
+      if (lower.endsWith(entry)) return true;
+    } else {
+      // Exact email match
+      if (lower === entry) return true;
+    }
+  }
+  return false;
 }
 
 export const {
@@ -28,10 +43,10 @@ export const {
   ],
   callbacks: {
     async signIn({ user, profile }) {
-      const allowed = parseAllowedEmails();
+      const allowList = parseAllowList();
 
       // If you don't set EXEC_ALLOWED_EMAILS, deny sign-in in production.
-      if (allowed.length === 0) {
+      if (allowList.length === 0) {
         return process.env.NODE_ENV !== "production";
       }
 
@@ -41,7 +56,7 @@ export const {
         user?.email ??
         "";
 
-      return allowed.includes(email.toLowerCase());
+      return isAllowed(email, allowList);
     },
   },
   pages: {
