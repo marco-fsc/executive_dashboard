@@ -1,12 +1,10 @@
-import { auth } from "@/auth";
+import { NextResponse } from "next/server";
 
-export default auth((req) => {
-  if (!req.auth) {
-    const signInUrl = new URL("/api/auth/signin", req.nextUrl.origin);
-    signInUrl.searchParams.set("callbackUrl", req.nextUrl.href);
-    return Response.redirect(signInUrl);
-  }
-});
+// Note: Next.js Middleware runs in the Edge Runtime. Auth.js/NextAuth session
+// validation is done in the Server Component for /dashboard.
+export function middleware() {
+  return NextResponse.next();
+}
 
 export const config = {
   matcher: ["/dashboard/:path*"],

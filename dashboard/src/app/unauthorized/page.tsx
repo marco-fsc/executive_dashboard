@@ -1,19 +1,21 @@
 import Link from "next/link";
 
-export default function UnauthorizedPage({
+export default async function UnauthorizedPage({
   searchParams,
 }: {
-  searchParams?: { error?: string };
+  searchParams?: Promise<{ error?: string }>;
 }) {
+  const sp = await searchParams;
+
   return (
     <main>
       <h1>Access denied</h1>
       <p>
         Your account is not authorized to access this dashboard.
-        {searchParams?.error ? (
+        {sp?.error ? (
           <>
             <br />
-            Error: <code>{searchParams.error}</code>
+            Error: <code>{sp.error}</code>
           </>
         ) : null}
       </p>

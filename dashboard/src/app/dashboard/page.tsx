@@ -1,12 +1,12 @@
 import { auth } from "@/auth";
 import { SignOutButton } from "@/app/_components/AuthButtons";
+import { redirect } from "next/navigation";
 
 export default async function DashboardPage() {
   const session = await auth();
 
-  // Route is also protected by middleware; this is just a safe fallback.
   if (!session) {
-    return null;
+    redirect("/api/auth/signin?callbackUrl=/dashboard");
   }
 
   return (
