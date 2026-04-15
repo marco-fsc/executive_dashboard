@@ -1,11 +1,23 @@
+:root {
+  --color-brand: #228B22;
+  --color-link: #0a58ca;
+  --color-muted: #555;
+  --color-border: #e5e5e5;
+  --color-bg: #fff;
+  --color-surface: #f6f6f6;
+  --max-width: 960px;
+}
+
 html, body {
   padding: 0;
   margin: 0;
-  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  color: #111;
+  background: var(--color-bg);
 }
 
 main {
-  max-width: 960px;
+  max-width: var(--max-width);
   margin: 48px auto;
   padding: 0 16px;
 }
@@ -19,24 +31,56 @@ p {
 }
 
 a {
-  color: #0a58ca;
+  color: var(--color-link);
 }
 
 button {
   padding: 10px 14px;
   border-radius: 8px;
   border: 1px solid #ccc;
-  background: #fff;
+  background: var(--color-bg);
   cursor: pointer;
 }
 
 button:hover {
-  background: #f6f6f6;
+  background: var(--color-surface);
+}
+
+button:focus-visible {
+  outline: 2px solid var(--color-link);
+  outline-offset: 2px;
 }
 
 .card {
-  border: 1px solid #e5e5e5;
+  border: 1px solid var(--color-border);
   border-radius: 12px;
   padding: 16px;
   margin-top: 16px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+th, td {
+  padding: 6px 8px;
+  text-align: left;
+}
+
+th {
+  border-bottom: 2px solid var(--color-border);
+  font-weight: 600;
+}
+
+td {
+  border-bottom: 1px solid var(--color-border);
+}
+
+select, input[type="number"] {
+  padding: 8px 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
 }

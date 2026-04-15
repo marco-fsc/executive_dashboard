@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { TopNav } from "@/app/_components/TopNav";
 
 export default async function UnauthorizedPage({
   searchParams,
@@ -8,20 +9,23 @@ export default async function UnauthorizedPage({
   const sp = await searchParams;
 
   return (
-    <main>
-      <h1>Access denied</h1>
-      <p>
-        Your account is not authorized to access this dashboard.
-        {sp?.error ? (
-          <>
-            <br />
-            Error: <code>{sp.error}</code>
-          </>
+    <>
+      <TopNav email={null} />
+      <main>
+        <h1>Access denied</h1>
+        <p>
+          Your account is not authorized to access this dashboard.
+          Please sign in with a <strong>@firststepcommunities.org</strong> account.
+        </p>
+        {sp?.error === "AccessDenied" ? (
+          <p style={{ fontSize: 13, color: "#888" }}>
+            The account you used is not on the allowlist.
+          </p>
         ) : null}
-      </p>
-      <p>
-        <Link href="/">Back to sign-in</Link>
-      </p>
-    </main>
+        <p>
+          <Link href="/">Back to sign-in</Link>
+        </p>
+      </main>
+    </>
   );
 }

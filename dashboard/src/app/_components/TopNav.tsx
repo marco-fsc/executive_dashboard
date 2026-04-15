@@ -12,7 +12,7 @@ export function TopNav({ email }: { email: string | null }) {
         <Link href="/clients">Clients</Link>
         <Link href="/upload">Upload</Link>
         <div style={{ marginLeft: "auto", fontSize: 12, color: "#555" }}>
-          {email ? email : ""}
+          {email ?? ""}
         </div>
       </div>
     </div>

@@ -2,8 +2,8 @@ import "./globals.css";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "FSC Executive Dashboard",
-  description: "Private executive dashboard (Microsoft Entra ID protected)",
+  title: "FSC Dashboard",
+  description: "First Step Communities housing outcomes dashboard",
 };
 
 export default function RootLayout({
