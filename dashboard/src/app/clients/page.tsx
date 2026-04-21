@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { TopNav } from "@/app/_components/TopNav";
 import { readCurrentDataset } from "@/lib/blob-dataset-store";
 import { clientList, cmList, programList } from "@/lib/metrics";
+import { ClientTable } from "./ClientTable";
 
 export default async function ClientsPage({
   searchParams,
@@ -136,56 +137,7 @@ export default async function ClientsPage({
               </div>
             </form>
 
-            <div className="card" style={{ overflowX: "auto", padding: 0 }}>
-              <table>
-                <thead>
-                  <tr>
-                    <th>Client ID</th>
-                    <th>Program</th>
-                    <th>Case Manager</th>
-                    <th style={{ textAlign: "right" }}>Days In</th>
-                    <th style={{ textAlign: "right" }}>Last Svc</th>
-                    <th style={{ textAlign: "right" }}>Services</th>
-                    <th>Risk</th>
-                    <th>Flags</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows.map((r) => {
-                    const riskClass =
-                      r.risk_level === "High" ? "badge-high" :
-                      r.risk_level === "Medium" ? "badge-medium" : "badge-low";
-                    return (
-                      <tr key={r.uid}>
-                        <td style={{ fontFamily: "monospace", fontSize: 12, color: "var(--color-muted)" }}>{r.uid}</td>
-                        <td>{r.program}</td>
-                        <td>{r.cm}</td>
-                        <td style={{ textAlign: "right" }}>{r.days_in_program ?? ""}</td>
-                        <td style={{ textAlign: "right" }}>{r.days_since_service ?? ""}</td>
-                        <td style={{ textAlign: "right" }}>{r.services_count}</td>
-                        <td>
-                          <span className={`badge ${riskClass}`}>{r.risk_level}</span>
-                          {" "}
-                          <span style={{ fontSize: 11, color: "var(--color-muted)" }}>({r.risk_score})</span>
-                        </td>
-                        <td style={{ fontSize: 12 }}>{r.flags.join(", ") || "—"}</td>
-                        <td>
-                          {r.exit_date ? (
-                            <div>
-                              <div style={{ fontSize: 12 }}>{r.exit_date}</div>
-                              <div style={{ fontSize: 11, color: "var(--color-muted)" }}>{r.destination}</div>
-                            </div>
-                          ) : (
-                            <span className="badge badge-active">Active</span>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+            <ClientTable rows={rows} />
           </>
         )}
       </main>

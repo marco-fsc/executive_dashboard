@@ -1,6 +1,8 @@
 import type { Dataset, Enrollment, ServiceEvent } from "@/lib/dataset";
 
 export const CAN_IDENTIFIER = "CAN Team Outreach";
+const APPOINTMENT_REMINDER_ITEM = "Appointment Reminders";
+const ATTEMPTED_ENGAGEMENT_ITEM = "Attempted Engagement";
 
 export const PROGRAM_ORDER = [
   "North A",
@@ -242,9 +244,14 @@ export interface CmSummaryEntry {
   active_clients: number;
   total_exits: number;
   perm_exits: number;
+  perm_exit_pct: number;
   homeless_exits: number;
   /** Real services (excludes Attempted Engagement + Appointment Reminders) */
   services_logged: number;
+  /** Real services in the last 30 days for this CM's active clients */
+  services_last_30d: number;
+  /** Total real services / total person-months active */
+  avg_services_per_month: number;
   /** Appointment Reminder notes — dated contact but not full service */
   appointment_reminders: number;
   /** Attempted Engagement rows — CM tried but client was unavailable */
@@ -278,14 +285,37 @@ export function cmSummary(ds: Dataset, program?: string | null) {
       return d === null || d === undefined || (d as number) > 21;
     }).length;
 
+    // Services in the last 30 days (real only, matched by uid+program enrollment key)
+    const today30 = new Date();
+    today30.setDate(today30.getDate() - 30);
+    const cutoff30 = `${today30.getFullYear()}-${String(today30.getMonth() + 1).padStart(2, "0")}-${String(today30.getDate()).padStart(2, "0")}`;
+    const activeEnrollmentKeys = new Set(active.map((e) => `${e.uid}|${e.Name}`));
+    const svcs30d = ds.services.filter(
+      (s) =>
+        activeEnrollmentKeys.has(`${s.uid}|${s.Name}`) &&
+        s["Service Attendance Date"] >= cutoff30 &&
+        s["Service Item Name"] !== APPOINTMENT_REMINDER_ITEM &&
+        s["Service Item Name"] !== ATTEMPTED_ENGAGEMENT_ITEM
+    ).length;
+
+    // Avg real services per person-month across active caseload
+    const totalPersonMonths = active.reduce((s, e) => s + ((e["Days in Project"] ?? 0) / 30), 0);
+    const totalRealSvcs = active.reduce((s, e) => s + (e.service_count ?? 0), 0);
+    const avgSvcPerMonth = totalPersonMonths > 0
+      ? Math.round((totalRealSvcs / totalPersonMonths) * 10) / 10
+      : 0;
+
     out.push({
       cm,
       program: program ? program : group[0]?.Name ?? "Multiple",
       active_clients: active.length,
       total_exits: exited.length,
       perm_exits: perm,
+      perm_exit_pct: pct(perm, exited.length),
       homeless_exits: homeless,
-      services_logged: active.reduce((s, e) => s + (e.service_count ?? 0), 0),
+      services_logged: totalRealSvcs,
+      services_last_30d: svcs30d,
+      avg_services_per_month: avgSvcPerMonth,
       appointment_reminders: active.reduce((s, e) => s + (e.appointment_reminder_count ?? 0), 0),
       attempted_engagements: active.reduce((s, e) => s + (e.attempted_engagement_count ?? 0), 0),
       no_real_svc_21d: noRealSvc21d,
