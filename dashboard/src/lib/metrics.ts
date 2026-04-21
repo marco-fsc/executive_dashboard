@@ -2,6 +2,14 @@ import type { Dataset, Enrollment, ServiceEvent } from "@/lib/dataset";
 
 export const CAN_IDENTIFIER = "CAN Team Outreach";
 
+export const PROGRAM_ORDER = [
+  "North A",
+  "Grove",
+  "Roseville Road",
+  "Stockton Safe Stay",
+  "CAN Team",
+] as const;
+
 export const DEFAULT_SERVICE_ITEMS = [
   "Primary Care Services",
   "Connect to a Primary Health Care Provider",
@@ -228,6 +236,19 @@ export function programSummary(ds: Dataset, program?: string | null, months?: nu
   return out.sort((a, b) => Number(b.active) - Number(a.active));
 }
 
+export interface CmSummaryEntry {
+  cm: string;
+  program: string;
+  active_clients: number;
+  total_exits: number;
+  perm_exits: number;
+  homeless_exits: number;
+  services_logged: number;
+  zero_services: number;
+  no_recent_contact: number;
+  high_risk_clients: number;
+}
+
 export function cmSummary(ds: Dataset, program?: string | null) {
   let rows = ds.enrollments;
   if (program) rows = rows.filter((e) => e.Name === program);
@@ -238,7 +259,7 @@ export function cmSummary(ds: Dataset, program?: string | null) {
     byCm.set(cm, [...(byCm.get(cm) ?? []), e]);
   }
 
-  const out: Array<Record<string, unknown>> = [];
+  const out: CmSummaryEntry[] = [];
   for (const [cm, group] of byCm.entries()) {
     const active = group.filter((e) => String(e["Active in Project"]) === "Yes");
     const exited = group.filter((e) => String(e["Active in Project"]) === "No");
@@ -316,7 +337,7 @@ export function clientList(
     if ((row["Days in Project"] ?? 0) >= 60) flags.push("Long Stay");
 
     return {
-      uid: row.uid_hash,
+      uid: row.uid,
       program: row.Name,
       cm: row["Assigned Staff"] ?? "",
       days_in_program: row["Days in Project"] ?? null,

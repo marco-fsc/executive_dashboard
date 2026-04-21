@@ -7,7 +7,6 @@
  *
  * Required env vars (set in .env.local or export them):
  *   BLOB_READ_WRITE_TOKEN   — from Vercel Storage → Blob
- *   INGEST_SALT             — same value as in Vercel env vars
  */
 
 import fs from "node:fs";
@@ -38,11 +37,6 @@ async function main() {
     process.exit(1);
   }
 
-  if (!process.env.INGEST_SALT) {
-    console.error("ERROR: INGEST_SALT env var is required.");
-    process.exit(1);
-  }
-
   const resolved = path.resolve(csvPath);
   if (!fs.existsSync(resolved)) {
     console.error(`File not found: ${resolved}`);
@@ -53,7 +47,7 @@ async function main() {
   const csvText = fs.readFileSync(resolved, "utf-8");
   const filename = path.basename(resolved);
 
-  console.log("Building dataset (ingest + hash + dedup)...");
+  console.log("Building dataset (ingest + dedup)...");
   const dataset = buildDatasetFromRawCsv(csvText, filename);
 
   console.log(

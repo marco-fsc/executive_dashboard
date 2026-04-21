@@ -1,7 +1,7 @@
 export type ISODateString = string;
 
 export interface Enrollment {
-  uid_hash: string;
+  uid: string;
   Name: string; // Program name
   "Project Start Date": ISODateString;
   "Project Exit Date"?: ISODateString;
@@ -28,7 +28,7 @@ export interface Enrollment {
 }
 
 export interface ServiceEvent {
-  uid_hash: string;
+  uid: string;
   Name: string;
   "Project Start Date": ISODateString;
   "Service Item Name": string;

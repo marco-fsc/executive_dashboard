@@ -7,6 +7,9 @@ Live: <https://www.dashboard.firststepcommunities.org>
 
 ---
 
+## Run Dashboard - 3 Tier report in hmis
+(Run The Rsport)[https://sac.clarityhs.com/report/embed/117577/1]
+
 ## Quick Start
 
 ```bash

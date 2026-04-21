@@ -2,7 +2,9 @@ import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { TopNav } from "@/app/_components/TopNav";
 import { readCurrentDataset } from "@/lib/blob-dataset-store";
-import { cmSummary, programList } from "@/lib/metrics";
+import { cmSummary, programList, clientList, PROGRAM_ORDER } from "@/lib/metrics";
+import { CmCardsGroup } from "./CmCardsGroup";
+import type { ClientEntry } from "./CmCardsGroup";
 
 export default async function SupervisorPage({
   searchParams,
@@ -49,24 +51,43 @@ export default async function SupervisorPage({
               {program ? <a href="/supervisor" style={{ marginLeft: "auto" }}>Clear</a> : <span style={{ marginLeft: "auto" }} />}
             </form>
 
-            <div style={{ display: "grid", gap: 14, gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))" }}>
-              {cmSummary(ds, program || null).map((cm) => (
-                <div key={String(cm.cm)} className="card" style={{ padding: 0, overflow: "hidden" }}>
-                  <div style={{ background: "var(--color-surface-alt)", padding: "12px 18px", display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid var(--color-border)" }}>
-                    <strong style={{ color: "var(--color-brand-dark)" }}>{String(cm.cm)}</strong>
-                    <span className="badge badge-active">{String(cm.active_clients)} active</span>
-                  </div>
-                  <div style={{ padding: "14px 18px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px 24px", fontSize: 14 }}>
-                    <div>Perm exits <strong style={{ float: "right" }}>{String(cm.perm_exits)}</strong></div>
-                    <div>Homeless exits <strong style={{ float: "right" }}>{String(cm.homeless_exits)}</strong></div>
-                    <div>Services logged <strong style={{ float: "right" }}>{String(cm.services_logged)}</strong></div>
-                    <div>No services <strong style={{ float: "right" }}>{String(cm.zero_services)}</strong></div>
-                    <div>No recent contact <strong style={{ float: "right" }}>{String(cm.no_recent_contact)}</strong></div>
-                    <div>High risk <strong style={{ float: "right" }}>{String(cm.high_risk_clients)}</strong></div>
-                  </div>
-                </div>
-              ))}
-            </div>
+            {(() => {
+              const allClients = clientList(ds, { active_only: false }) as ClientEntry[];
+              const allPrograms = programList(ds);
+
+              const programsToShow: string[] = program
+                ? [program]
+                : [
+                    ...PROGRAM_ORDER.filter((p) => allPrograms.includes(p)),
+                    ...allPrograms.filter((p) => !(PROGRAM_ORDER as readonly string[]).includes(p)),
+                  ];
+
+              return programsToShow.map((prog) => {
+                const cms = cmSummary(ds, prog);
+                if (!cms.length) return null;
+                const progClients = allClients.filter((c) => c.program === prog);
+
+                return (
+                  <section key={prog} style={{ marginTop: 28 }}>
+                    <h2
+                      style={{
+                        fontSize: 15,
+                        fontWeight: 700,
+                        letterSpacing: "0.05em",
+                        textTransform: "uppercase",
+                        color: "var(--color-brand-dark)",
+                        borderBottom: "2px solid var(--color-brand)",
+                        paddingBottom: 6,
+                        marginBottom: 14,
+                      }}
+                    >
+                      {prog}
+                    </h2>
+                    <CmCardsGroup cms={cms} clients={progClients} />
+                  </section>
+                );
+              });
+            })()}
           </>
         )}
       </main>

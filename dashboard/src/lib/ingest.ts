@@ -1,4 +1,3 @@
-import crypto from "node:crypto";
 import Papa from "papaparse";
 
 import type { Dataset, Enrollment, ISODateString, ServiceEvent } from "@/lib/dataset";
@@ -35,15 +34,6 @@ function parseCashIncome(row: Record<string, unknown>): number | null {
   if (s === "") return null;
   const n = Number(s);
   return Number.isFinite(n) ? n : null;
-}
-
-function hmacUid(rawUid: unknown): string {
-  const salt = process.env.INGEST_SALT;
-  if (!salt) {
-    throw new Error("Missing INGEST_SALT env var (required to hash client identifiers). ");
-  }
-  const msg = String(rawUid ?? "");
-  return crypto.createHmac("sha256", salt).update(msg).digest("hex").slice(0, 16);
 }
 
 function cleanRowKeys(row: Record<string, unknown>): Record<string, unknown> {
@@ -84,7 +74,7 @@ export function buildDatasetFromRawCsv(csvText: string, sourceFilename?: string)
     const start = toISODate(raw["Project Start Date"]);
     if (!program || !start) continue;
 
-    const uidHash = hmacUid(raw["Unique Identifier"]);
+    const uidHash = String(raw["Unique Identifier"] ?? "").trim();
     const key = `${uidHash}|${program}|${start}`;
 
     const svcDate =
@@ -98,7 +88,7 @@ export function buildDatasetFromRawCsv(csvText: string, sourceFilename?: string)
 
     if (svcDate && svcItem) {
       services.push({
-        uid_hash: uidHash,
+        uid: uidHash,
         Name: program,
         "Project Start Date": start,
         "Service Item Name": svcItem,
@@ -122,7 +112,7 @@ export function buildDatasetFromRawCsv(csvText: string, sourceFilename?: string)
     if (shouldReplaceSnapshot) {
       const daysInProject = Number(raw["Days in Project"]);
       enrollmentsByKey.set(key, {
-        uid_hash: uidHash,
+        uid: uidHash,
         Name: program,
         "Project Start Date": start,
         "Project Exit Date": toISODate(raw["Project Exit Date"]) || undefined,
