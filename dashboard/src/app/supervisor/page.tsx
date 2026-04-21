@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { TopNav } from "@/app/_components/TopNav";
 import { readCurrentDataset } from "@/lib/blob-dataset-store";
 import { cmSummary, programList, clientList, PROGRAM_ORDER } from "@/lib/metrics";
+import { readAcl, resolveRole } from "@/lib/acl";
 import { CmCardsGroup } from "./CmCardsGroup";
 import type { ClientEntry, ServiceLogEntry } from "./CmCardsGroup";
 
@@ -18,8 +19,17 @@ export default async function SupervisorPage({
     redirect("/api/auth/signin?callbackUrl=/supervisor");
   }
 
+  const userEmail = session.user?.email ?? "";
+  const acl = await readAcl();
+  const userRole = resolveRole(userEmail, acl);
+
+  // Supervisors are locked to their assigned program; ignore the query param.
   const sp = await searchParams;
-  const program = sp?.program ?? "";
+  const rawProgram = sp?.program ?? "";
+  const program =
+    userRole.role === "supervisor" && userRole.program
+      ? userRole.program
+      : rawProgram;
 
   const ds = await readCurrentDataset();
 
@@ -35,23 +45,31 @@ export default async function SupervisorPage({
           </div>
         ) : (
           <>
-            <form method="get" className="card" style={{ display: "flex", gap: 12, alignItems: "end" }}>
-              <div>
-                <label>
-                  Program
-                  <select name="program" defaultValue={program} style={{ display: "block", marginTop: 6 }}>
-                    <option value="">All Programs</option>
-                    {programList(ds).map((p) => (
-                      <option key={p} value={p}>
-                        {p}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+            {userRole.role !== "supervisor" && (
+              <form method="get" className="card" style={{ display: "flex", gap: 12, alignItems: "end" }}>
+                <div>
+                  <label>
+                    Program
+                    <select name="program" defaultValue={program} style={{ display: "block", marginTop: 6 }}>
+                      <option value="">All Programs</option>
+                      {programList(ds).map((p) => (
+                        <option key={p} value={p}>
+                          {p}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+                <button type="submit">Apply</button>
+                {program ? <a href="/supervisor" style={{ marginLeft: "auto" }}>Clear</a> : <span style={{ marginLeft: "auto" }} />}
+              </form>
+            )}
+            {userRole.role === "supervisor" && program && (
+              <div className="card" style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <span style={{ fontSize: 13, color: "var(--color-muted)" }}>Showing program:</span>
+                <strong>{program}</strong>
               </div>
-              <button type="submit">Apply</button>
-              {program ? <a href="/supervisor" style={{ marginLeft: "auto" }}>Clear</a> : <span style={{ marginLeft: "auto" }} />}
-            </form>
+            )}
 
             {(() => {
               const allClients = clientList(ds, { active_only: false }) as ClientEntry[];

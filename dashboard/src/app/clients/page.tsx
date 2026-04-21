@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { TopNav } from "@/app/_components/TopNav";
 import { readCurrentDataset } from "@/lib/blob-dataset-store";
 import { clientList, cmList, programList } from "@/lib/metrics";
+import { readAcl, resolveRole } from "@/lib/acl";
 import { ClientTable } from "./ClientTable";
 
 export default async function ClientsPage({
@@ -15,11 +16,19 @@ export default async function ClientsPage({
     redirect("/api/auth/signin?callbackUrl=/clients");
   }
 
-  const sp = (await searchParams) ?? {};
+  const userEmail = session.user?.email ?? "";
+  const sp: Record<string, string | undefined> = (await searchParams) ?? {};
+  const acl = await readAcl();
+  const userRole = resolveRole(userEmail, acl);
 
   const ds = await readCurrentDataset();
 
-  const program = sp.program ?? "";
+  // Supervisors are locked to their assigned program.
+  const rawProgram = sp.program ?? "";
+  const program =
+    userRole.role === "supervisor" && userRole.program
+      ? userRole.program
+      : rawProgram;
   const cm = sp.cm ?? "";
   const risk = sp.risk ?? "";
 
@@ -67,17 +76,25 @@ export default async function ClientsPage({
             </div>
 
             <form method="get" className="card" style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))" }}>
-              <label>
-                Program
-                <select name="program" defaultValue={program} style={{ display: "block", marginTop: 4, width: "100%" }}>
-                  <option value="">All</option>
-                  {programList(ds).map((p) => (
-                    <option key={p} value={p}>
-                      {p}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              {userRole.role === "supervisor" ? (
+                <div>
+                  <span style={{ fontSize: 13, color: "var(--color-muted)" }}>Program</span>
+                  <div style={{ marginTop: 4, fontWeight: 600 }}>{program}</div>
+                  <input type="hidden" name="program" value={program} />
+                </div>
+              ) : (
+                <label>
+                  Program
+                  <select name="program" defaultValue={program} style={{ display: "block", marginTop: 4, width: "100%" }}>
+                    <option value="">All</option>
+                    {programList(ds).map((p) => (
+                      <option key={p} value={p}>
+                        {p}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              )}
 
               <label>
                 Case Manager

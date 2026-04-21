@@ -10,5 +10,6 @@ export const config = {
     "/supervisor/:path*",
     "/clients/:path*",
     "/upload/:path*",
+    "/admin/:path*",
   ],
 };
