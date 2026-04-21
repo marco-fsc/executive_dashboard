@@ -12,8 +12,12 @@ export interface Enrollment {
   "Days in Project"?: number;
 
   last_service_date?: ISODateString;
-  service_count?: number;
-  "Days Since Last Service"?: number | null;
+  service_count?: number;           // real services only (excludes Attempted Engagement & Appointment Reminders)
+  attempted_engagement_count?: number; // rows where client was unavailable (no attendance date)
+  appointment_reminder_count?: number; // reminder notes left; have a date but not full service
+  last_real_service_date?: ISODateString; // last date of a real service (not reminder)
+  "Days Since Last Service"?: number | null;      // days since real-or-reminder contact
+  "Days Since Last Real Service"?: number | null; // days since a real service
 
   "Mental Health"?: string;
   "Chronic Health"?: string;

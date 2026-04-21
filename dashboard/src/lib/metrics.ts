@@ -243,8 +243,14 @@ export interface CmSummaryEntry {
   total_exits: number;
   perm_exits: number;
   homeless_exits: number;
+  /** Real services (excludes Attempted Engagement + Appointment Reminders) */
   services_logged: number;
-  zero_services: number;
+  /** Appointment Reminder notes — dated contact but not full service */
+  appointment_reminders: number;
+  /** Attempted Engagement rows — CM tried but client was unavailable */
+  attempted_engagements: number;
+  /** Active clients with zero real services */
+  zero_real_services: number;
   no_recent_contact: number;
   high_risk_clients: number;
 }
@@ -268,17 +274,19 @@ export function cmSummary(ds: Dataset, program?: string | null) {
     const homeless = exited.filter((e) => e["Destination Category"] === "Homeless Situations").length;
     const highRisk = active.filter((e) => e["Risk Level"] === "High").length;
     const noRecent = active.filter((e) => e["Days Since Last Service"] === null || (e["Days Since Last Service"] ?? 0) > 21).length;
-    const zeroSvc = active.filter((e) => (e.service_count ?? 0) === 0).length;
+    const zeroRealSvc = active.filter((e) => (e.service_count ?? 0) === 0).length;
 
     out.push({
       cm,
-      program: program ? program : "Multiple",
+      program: program ? program : group[0]?.Name ?? "Multiple",
       active_clients: active.length,
       total_exits: exited.length,
       perm_exits: perm,
       homeless_exits: homeless,
       services_logged: active.reduce((s, e) => s + (e.service_count ?? 0), 0),
-      zero_services: zeroSvc,
+      appointment_reminders: active.reduce((s, e) => s + (e.appointment_reminder_count ?? 0), 0),
+      attempted_engagements: active.reduce((s, e) => s + (e.attempted_engagement_count ?? 0), 0),
+      zero_real_services: zeroRealSvc,
       no_recent_contact: noRecent,
       high_risk_clients: highRisk,
     });
@@ -310,7 +318,7 @@ export function clientList(
 
   if (filters.min_days != null) rows = rows.filter((e) => (e["Days in Project"] ?? 0) >= filters.min_days!);
   if (filters.max_days != null) rows = rows.filter((e) => (e["Days in Project"] ?? 0) <= filters.max_days!);
-  if (filters.no_services) rows = rows.filter((e) => (e.service_count ?? 0) === 0);
+  if (filters.no_services) rows = rows.filter((e) => (e.service_count ?? 0) === 0); // real services only
   if (filters.no_recent) rows = rows.filter((e) => (e["Days Since Last Service"] ?? 0) > 21);
   if (filters.approaching_60) rows = rows.filter((e) => {
     const d = e["Days in Project"] ?? 0;
@@ -342,7 +350,10 @@ export function clientList(
       cm: row["Assigned Staff"] ?? "",
       days_in_program: row["Days in Project"] ?? null,
       days_since_service: daysSince ?? null,
+      days_since_real_service: row["Days Since Last Real Service"] ?? null,
       services_count: row.service_count ?? 0,
+      attempted_engagements: row.attempted_engagement_count ?? 0,
+      appointment_reminders: row.appointment_reminder_count ?? 0,
       risk_level: String(row["Risk Level"] ?? ""),
       risk_score: Number(row["Risk Score"] ?? 0),
       flags,

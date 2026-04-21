@@ -67,7 +67,18 @@ export function buildDatasetFromRawCsv(csvText: string, sourceFilename?: string)
   };
 
   const enrollmentsByKey = new Map<string, TmpEnrollment>();
-  const svcAggByKey = new Map<string, { count: number; lastDate: ISODateString | "" }>();
+const ATTEMPTED_ENGAGEMENT = "Attempted Engagement";
+const APPOINTMENT_REMINDER = "Appointment Reminders";
+
+type SvcAgg = {
+  realCount: number;
+  attemptedCount: number;
+  reminderCount: number;
+  lastDate: ISODateString | "";     // last real-or-reminder date (for "last contact")
+  lastRealDate: ISODateString | ""; // last real service date
+};
+
+  const svcAggByKey = new Map<string, SvcAgg>();
 
   for (const raw of rawRows) {
     const program = String(raw["Name"] ?? "").trim();
@@ -97,11 +108,23 @@ export function buildDatasetFromRawCsv(csvText: string, sourceFilename?: string)
       });
     }
 
-    const agg = svcAggByKey.get(key) ?? { count: 0, lastDate: "" as const };
-    agg.count += 1;
-    if (svcDate && (!agg.lastDate || svcDate > agg.lastDate)) {
-      agg.lastDate = svcDate;
+    const isAttempted = svcItem.toLowerCase() === ATTEMPTED_ENGAGEMENT.toLowerCase();
+    const isReminder = svcItem.toLowerCase() === APPOINTMENT_REMINDER.toLowerCase();
+
+    const agg = svcAggByKey.get(key) ?? { realCount: 0, attemptedCount: 0, reminderCount: 0, lastDate: "", lastRealDate: "" };
+
+    if (isAttempted) {
+      agg.attemptedCount += 1;
+      // Attempted engagements have no date — do not update lastDate/lastRealDate
+    } else if (isReminder) {
+      agg.reminderCount += 1;
+      if (svcDate && (!agg.lastDate || svcDate > agg.lastDate)) agg.lastDate = svcDate;
+    } else {
+      agg.realCount += 1;
+      if (svcDate && (!agg.lastDate || svcDate > agg.lastDate)) agg.lastDate = svcDate;
+      if (svcDate && (!agg.lastRealDate || svcDate > agg.lastRealDate)) agg.lastRealDate = svcDate;
     }
+
     svcAggByKey.set(key, agg);
 
     const snapshot = enrollmentsByKey.get(key);
@@ -140,9 +163,13 @@ export function buildDatasetFromRawCsv(csvText: string, sourceFilename?: string)
   for (const [key, e] of enrollmentsByKey.entries()) {
     const agg = svcAggByKey.get(key);
     const lastDate = agg?.lastDate || "";
-    const serviceCount = agg?.count ?? 0;
+    const lastRealDate = agg?.lastRealDate || "";
+    const realCount = agg?.realCount ?? 0;
+    const attemptedCount = agg?.attemptedCount ?? 0;
+    const reminderCount = agg?.reminderCount ?? 0;
 
     const daysSince = lastDate ? daysBetween(lastDate, todayISO) : null;
+    const daysSinceReal = lastRealDate ? daysBetween(lastRealDate, todayISO) : null;
 
     const hasSubstance = SUBSTANCE_USE_COLS.has(String(e["Substance Use Disorder"] ?? ""));
 
@@ -150,7 +177,9 @@ export function buildDatasetFromRawCsv(csvText: string, sourceFilename?: string)
     const riskChronic = String(e["Chronic Health"] ?? "").toLowerCase() === "yes";
     const riskDev = String(e.Developmental ?? "").toLowerCase() === "yes";
     const riskPoorHealth = String(e["General Health Status"] ?? "").toLowerCase() === "poor";
-    const riskNoServices = serviceCount === 0;
+    // Risk is based on real services only — appointment reminders are not full service
+    const riskNoServices = realCount === 0;
+    // No recent contact counts any dated contact (real or reminder)
     const riskNoRecent = daysSince === null || daysSince > 21;
     const riskLongStay = (e["Days in Project"] ?? 0) >= 60 && String(e["Active in Project"]) === "Yes";
 
@@ -170,8 +199,12 @@ export function buildDatasetFromRawCsv(csvText: string, sourceFilename?: string)
     delete (cleaned as unknown as { _snapshotSvcDate?: unknown })._snapshotSvcDate;
 
     cleaned.last_service_date = lastDate || undefined;
-    cleaned.service_count = serviceCount;
+    cleaned.last_real_service_date = lastRealDate || undefined;
+    cleaned.service_count = realCount;
+    cleaned.attempted_engagement_count = attemptedCount;
+    cleaned.appointment_reminder_count = reminderCount;
     cleaned["Days Since Last Service"] = daysSince;
+    cleaned["Days Since Last Real Service"] = daysSinceReal;
     cleaned["Risk Score"] = riskScore;
     cleaned["Risk Level"] = riskLevel;
 

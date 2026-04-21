@@ -4,7 +4,9 @@ import { TopNav } from "@/app/_components/TopNav";
 import { readCurrentDataset } from "@/lib/blob-dataset-store";
 import { cmSummary, programList, clientList, PROGRAM_ORDER } from "@/lib/metrics";
 import { CmCardsGroup } from "./CmCardsGroup";
-import type { ClientEntry } from "./CmCardsGroup";
+import type { ClientEntry, ServiceLogEntry } from "./CmCardsGroup";
+
+const APPOINTMENT_REMINDER = "Appointment Reminders";
 
 export default async function SupervisorPage({
   searchParams,
@@ -66,6 +68,17 @@ export default async function SupervisorPage({
                 const cms = cmSummary(ds, prog);
                 if (!cms.length) return null;
                 const progClients = allClients.filter((c) => c.program === prog);
+                const progServices: ServiceLogEntry[] = ds.services
+                  .filter((s) => s.Name === prog)
+                  .map((s) => ({
+                    uid: s.uid,
+                    service_item: s["Service Item Name"],
+                    attendance_date: s["Service Attendance Date"],
+                    category: s["Service Item Name"].toLowerCase() === APPOINTMENT_REMINDER.toLowerCase()
+                      ? "reminder"
+                      : "real",
+                    program: s.Name,
+                  }));
 
                 return (
                   <section key={prog} style={{ marginTop: 28 }}>
@@ -83,7 +96,7 @@ export default async function SupervisorPage({
                     >
                       {prog}
                     </h2>
-                    <CmCardsGroup cms={cms} clients={progClients} />
+                    <CmCardsGroup cms={cms} clients={progClients} services={progServices} />
                   </section>
                 );
               });
