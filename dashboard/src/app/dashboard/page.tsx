@@ -4,6 +4,7 @@ import { TopNav } from "@/app/_components/TopNav";
 import { SignOutButton } from "@/app/_components/AuthButtons";
 import { readCurrentDataset } from "@/lib/blob-dataset-store";
 import { canKpis, executiveKpis, programList, programSummary, serviceCounts } from "@/lib/metrics";
+import { readAcl, resolveRole, PAGE_ROLES } from "@/lib/acl";
 
 function monthsFromRange(range: string | undefined): number {
   if (range === "1") return 1;
@@ -19,6 +20,13 @@ export default async function DashboardPage({
   const session = await auth();
   if (!session) {
     redirect("/api/auth/signin?callbackUrl=/dashboard");
+  }
+
+  const userEmail = session.user?.email ?? "";
+  const acl = await readAcl();
+  const userRole = resolveRole(userEmail, acl);
+  if (!userRole || !PAGE_ROLES.dashboard.includes(userRole.role)) {
+    redirect("/unauthorized");
   }
 
   const sp = await searchParams;

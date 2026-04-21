@@ -1,28 +1,6 @@
 import NextAuth from "next-auth";
 import MicrosoftEntraID from "next-auth/providers/microsoft-entra-id";
-
-/** Comma-separated list of allowed email addresses or @domain patterns. */
-function parseAllowList(): string[] {
-  const raw = process.env.EXEC_ALLOWED_EMAILS ?? "";
-  return raw
-    .split(",")
-    .map((s) => s.trim().toLowerCase())
-    .filter(Boolean);
-}
-
-function isAllowed(email: string, allowList: string[]): boolean {
-  const lower = email.toLowerCase();
-  for (const entry of allowList) {
-    if (entry.startsWith("@")) {
-      // Domain match: "@firststepcommunities.org"
-      if (lower.endsWith(entry)) return true;
-    } else {
-      // Exact email match
-      if (lower === entry) return true;
-    }
-  }
-  return false;
-}
+import { isAdminEmail, readAcl } from "@/lib/acl";
 
 export const {
   handlers,
@@ -43,20 +21,21 @@ export const {
   ],
   callbacks: {
     async signIn({ user, profile }) {
-      const allowList = parseAllowList();
-
-      const email =
+      const email = (
         (profile as { email?: string; preferred_username?: string } | undefined)?.email ??
         (profile as { email?: string; preferred_username?: string } | undefined)?.preferred_username ??
         user?.email ??
-        "";
+        ""
+      ).toLowerCase();
 
-      // If you don't set EXEC_ALLOWED_EMAILS, deny sign-in in production.
-      if (allowList.length === 0) {
-        return process.env.NODE_ENV !== "production";
-      }
+      if (!email) return false;
 
-      return isAllowed(email, allowList);
+      // Admin is always allowed.
+      if (isAdminEmail(email)) return true;
+
+      // Everyone else must appear in the ACL blob.
+      const acl = await readAcl();
+      return Object.prototype.hasOwnProperty.call(acl.users, email);
     },
   },
   pages: {

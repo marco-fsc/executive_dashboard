@@ -2,13 +2,27 @@ import { get, put } from "@vercel/blob";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-export type UserRole = "admin" | "executive" | "supervisor";
+export type UserRole = "admin" | "executive" | "board" | "supervisor";
 
 export interface AclEntry {
   role: UserRole;
   /** Only set when role === "supervisor". Locks the user to a single program. */
   program?: string;
 }
+
+/**
+ * Page-level access: which roles are allowed on each route.
+ *   executive — all pages (supervisor, clients, upload, dashboard)
+ *   board     — executive KPI dashboard only
+ *   supervisor — supervisor + clients pages (own program only)
+ *   admin     — everything
+ */
+export const PAGE_ROLES = {
+  dashboard: ["admin", "executive", "board"] as UserRole[],
+  supervisor: ["admin", "executive", "supervisor"] as UserRole[],
+  clients: ["admin", "executive", "supervisor"] as UserRole[],
+  upload: ["admin", "executive"] as UserRole[],
+} as const;
 
 export interface Acl {
   /** Keyed by lowercase email address. */
@@ -34,11 +48,11 @@ export function isAdminEmail(email: string): boolean {
  * Resolve the effective role for a logged-in user.
  * - Admin email always becomes { role: "admin" }.
  * - If the email has an entry in the ACL, that entry is returned.
- * - Otherwise defaults to { role: "executive" } (can see everything, no edits).
+ * - Otherwise returns null (= no access — deny by default).
  */
-export function resolveRole(email: string, acl: Acl): AclEntry {
+export function resolveRole(email: string, acl: Acl): AclEntry | null {
   if (isAdminEmail(email)) return { role: "admin" };
-  return acl.users[email.toLowerCase()] ?? { role: "executive" };
+  return acl.users[email.toLowerCase()] ?? null;
 }
 
 // ─── Blob persistence ─────────────────────────────────────────────────────────

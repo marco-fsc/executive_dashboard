@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { TopNav } from "@/app/_components/TopNav";
 import { readCurrentDataset } from "@/lib/blob-dataset-store";
 import { cmSummary, programList, clientList, PROGRAM_ORDER } from "@/lib/metrics";
-import { readAcl, resolveRole } from "@/lib/acl";
+import { readAcl, resolveRole, PAGE_ROLES } from "@/lib/acl";
 import { CmCardsGroup } from "./CmCardsGroup";
 import type { ClientEntry, ServiceLogEntry } from "./CmCardsGroup";
 
@@ -22,6 +22,9 @@ export default async function SupervisorPage({
   const userEmail = session.user?.email ?? "";
   const acl = await readAcl();
   const userRole = resolveRole(userEmail, acl);
+  if (!userRole || !PAGE_ROLES.supervisor.includes(userRole.role)) {
+    redirect("/unauthorized");
+  }
 
   // Supervisors are locked to their assigned program; ignore the query param.
   const sp = await searchParams;

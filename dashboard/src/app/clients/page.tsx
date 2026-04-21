@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { TopNav } from "@/app/_components/TopNav";
 import { readCurrentDataset } from "@/lib/blob-dataset-store";
 import { clientList, cmList, programList } from "@/lib/metrics";
-import { readAcl, resolveRole } from "@/lib/acl";
+import { readAcl, resolveRole, PAGE_ROLES } from "@/lib/acl";
 import { ClientTable } from "./ClientTable";
 
 export default async function ClientsPage({
@@ -20,6 +20,9 @@ export default async function ClientsPage({
   const sp: Record<string, string | undefined> = (await searchParams) ?? {};
   const acl = await readAcl();
   const userRole = resolveRole(userEmail, acl);
+  if (!userRole || !PAGE_ROLES.clients.includes(userRole.role)) {
+    redirect("/unauthorized");
+  }
 
   const ds = await readCurrentDataset();
 

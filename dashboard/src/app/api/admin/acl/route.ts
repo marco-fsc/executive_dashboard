@@ -23,7 +23,7 @@ export async function POST(req: Request) {
   }
 
   // Sanitise: ensure only known roles are persisted
-  const allowed: string[] = ["executive", "supervisor"];
+  const allowed: string[] = ["executive", "board", "supervisor"];
   const sanitised: Acl = { users: {} };
   for (const [rawEmail, entry] of Object.entries(body.users)) {
     const lowerEmail = rawEmail.trim().toLowerCase();
