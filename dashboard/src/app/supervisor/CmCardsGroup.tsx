@@ -105,8 +105,7 @@ export function CmCardsGroup({ cms, clients, services }: Props) {
               <div style={{ padding: "12px 18px 0", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px 24px", fontSize: 14 }}>
                 <div>Perm exits <strong style={{ float: "right" }}>{cm.perm_exits}</strong></div>
                 <div>Homeless exits <strong style={{ float: "right" }}>{cm.homeless_exits}</strong></div>
-                <div>No real svc <strong style={{ float: "right" }}>{cm.zero_real_services}</strong></div>
-                <div>No contact <strong style={{ float: "right" }}>{cm.no_recent_contact}</strong></div>
+                <div title="Active clients with no real service attended in the past 21 days">No real svc (21d) <strong style={{ float: "right" }}>{cm.no_real_svc_21d}</strong></div>
                 <div>High risk <strong style={{ float: "right" }}>{cm.high_risk_clients}</strong></div>
               </div>
 

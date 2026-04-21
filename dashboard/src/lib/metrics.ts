@@ -249,9 +249,8 @@ export interface CmSummaryEntry {
   appointment_reminders: number;
   /** Attempted Engagement rows — CM tried but client was unavailable */
   attempted_engagements: number;
-  /** Active clients with zero real services */
-  zero_real_services: number;
-  no_recent_contact: number;
+  /** Active clients with no real service in the past 21 days (or never) */
+  no_real_svc_21d: number;
   high_risk_clients: number;
 }
 
@@ -273,8 +272,11 @@ export function cmSummary(ds: Dataset, program?: string | null) {
     const perm = exited.filter((e) => e["Destination Category"] === "Permanent Housing Situations").length;
     const homeless = exited.filter((e) => e["Destination Category"] === "Homeless Situations").length;
     const highRisk = active.filter((e) => e["Risk Level"] === "High").length;
-    const noRecent = active.filter((e) => e["Days Since Last Service"] === null || (e["Days Since Last Service"] ?? 0) > 21).length;
-    const zeroRealSvc = active.filter((e) => (e.service_count ?? 0) === 0).length;
+    // No real service in 21 days: last real service was >21 days ago, or client never had one
+    const noRealSvc21d = active.filter((e) => {
+      const d = e["Days Since Last Real Service"];
+      return d === null || d === undefined || (d as number) > 21;
+    }).length;
 
     out.push({
       cm,
@@ -286,13 +288,15 @@ export function cmSummary(ds: Dataset, program?: string | null) {
       services_logged: active.reduce((s, e) => s + (e.service_count ?? 0), 0),
       appointment_reminders: active.reduce((s, e) => s + (e.appointment_reminder_count ?? 0), 0),
       attempted_engagements: active.reduce((s, e) => s + (e.attempted_engagement_count ?? 0), 0),
-      zero_real_services: zeroRealSvc,
-      no_recent_contact: noRecent,
+      no_real_svc_21d: noRealSvc21d,
       high_risk_clients: highRisk,
     });
   }
 
-  return out.sort((a, b) => Number(b.active_clients) - Number(a.active_clients));
+  // Only return CMs who have at least one active client in this program
+  return out
+    .filter((entry) => entry.active_clients > 0)
+    .sort((a, b) => Number(b.active_clients) - Number(a.active_clients));
 }
 
 export function clientList(
