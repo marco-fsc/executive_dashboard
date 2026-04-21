@@ -268,11 +268,6 @@ export function AclEditor({ initialAcl, programs, adminEmail }: Props) {
     </div>
   );
 }
-
-
-interface Props {
-  initialAcl: Acl;
-  programs: readonly string[];
 }
 
 const ROLE_LABELS: Record<Exclude<UserRole, "admin">, string> = {

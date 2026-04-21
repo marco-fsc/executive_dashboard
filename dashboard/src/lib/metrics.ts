@@ -173,7 +173,31 @@ export function canKpis(ds: Dataset, months?: number | null) {
   };
 }
 
-export function programSummary(ds: Dataset, program?: string | null, months?: number | null) {
+export interface ExitDestinationBreakdown {
+  category: string;
+  destination: string;
+  count: number;
+  is_positive: boolean;
+  is_permanent: boolean;
+}
+
+export interface ProgramSummaryRow {
+  program: string;
+  active: number;
+  exits: number;
+  perm_exits: number;
+  perm_pct: number;
+  positive_exits: number;
+  positive_pct: number;
+  homeless_exits: number;
+  zero_services: number;
+  avg_los: number;
+  cms: number;
+  avg_cm_load: number;
+  exit_destinations: ExitDestinationBreakdown[];
+}
+
+export function programSummary(ds: Dataset, program?: string | null, months?: number | null): ProgramSummaryRow[] {
   let rows = ds.enrollments;
   if (program) rows = rows.filter((e) => e.Name === program);
 
@@ -185,7 +209,7 @@ export function programSummary(ds: Dataset, program?: string | null, months?: nu
     byProg.set(e.Name, [...(byProg.get(e.Name) ?? []), e]);
   }
 
-  const out: Array<Record<string, unknown>> = [];
+  const out: ProgramSummaryRow[] = [];
 
   for (const [progName, group] of byProg.entries()) {
     const isCan = progName.toLowerCase().includes(CAN_IDENTIFIER.toLowerCase());
@@ -199,21 +223,48 @@ export function programSummary(ds: Dataset, program?: string | null, months?: nu
     let homeless = 0;
     let positive = 0;
 
+    // Track destination breakdown: category → destination → count
+    const destMap = new Map<string, Map<string, number>>();
+
     for (const e of exited) {
-      const cat = e["Destination Category"] ?? "";
-      const dest = String(e.Destination ?? "");
+      const cat = e["Destination Category"] ?? "Unknown";
+      const dest = String(e.Destination ?? "Unknown");
       const institutionalGood = cat === "Institutional Situations" && !exclude.test(dest);
       const basePos =
         cat === "Permanent Housing Situations" ||
         cat === "Temporary Housing Situations" ||
         institutionalGood;
-
       const canExtra = isCan && (cat === "Other" || (cat === "Homeless Situations" && shelter.test(dest)));
 
       if (cat === "Permanent Housing Situations") perm += 1;
       if (cat === "Homeless Situations") homeless += 1;
       if (basePos || canExtra) positive += 1;
+
+      if (!destMap.has(cat)) destMap.set(cat, new Map());
+      const catMap = destMap.get(cat)!;
+      catMap.set(dest, (catMap.get(dest) ?? 0) + 1);
     }
+
+    // Flatten destination map → typed breakdown array
+    const exit_destinations: ExitDestinationBreakdown[] = [];
+    for (const [cat, dests] of destMap.entries()) {
+      for (const [dest, count] of dests.entries()) {
+        const institutionalGood = cat === "Institutional Situations" && !exclude.test(dest);
+        const basePos =
+          cat === "Permanent Housing Situations" ||
+          cat === "Temporary Housing Situations" ||
+          institutionalGood;
+        const canExtra = isCan && (cat === "Other" || (cat === "Homeless Situations" && shelter.test(dest)));
+        exit_destinations.push({
+          category: cat,
+          destination: dest,
+          count,
+          is_positive: basePos || canExtra,
+          is_permanent: cat === "Permanent Housing Situations",
+        });
+      }
+    }
+    exit_destinations.sort((a, b) => a.category.localeCompare(b.category) || b.count - a.count);
 
     const cms = new Set(active.map((e) => e["Assigned Staff"]).filter(Boolean)).size;
     const avgLoad = cms ? Math.round((active.length / cms) * 10) / 10 : 0;
@@ -232,10 +283,11 @@ export function programSummary(ds: Dataset, program?: string | null, months?: nu
       avg_los: avgLos,
       cms,
       avg_cm_load: avgLoad,
+      exit_destinations,
     });
   }
 
-  return out.sort((a, b) => Number(b.active) - Number(a.active));
+  return out.sort((a, b) => b.active - a.active);
 }
 
 export interface CmSummaryEntry {

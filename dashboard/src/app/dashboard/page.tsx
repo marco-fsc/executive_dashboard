@@ -5,6 +5,7 @@ import { SignOutButton } from "@/app/_components/AuthButtons";
 import { readCurrentDataset } from "@/lib/blob-dataset-store";
 import { canKpis, executiveKpis, programList, programSummary, serviceCounts } from "@/lib/metrics";
 import { readAcl, resolveRole, PAGE_ROLES } from "@/lib/acl";
+import { ProgramSummaryTable } from "./ProgramSummaryTable";
 
 function monthsFromRange(range: string | undefined): number {
   if (range === "1") return 1;
@@ -122,32 +123,7 @@ export default async function DashboardPage({
 
                   <div className="card" style={{ overflowX: "auto" }}>
                     <h2 style={{ marginTop: 0, fontSize: 18 }}>Program Summary</h2>
-                    <table>
-                      <thead>
-                        <tr>
-                          <th>Program</th>
-                          <th style={{ textAlign: "right" }}>Active</th>
-                          <th style={{ textAlign: "right" }}>Exits</th>
-                          <th style={{ textAlign: "right" }}>Perm %</th>
-                          <th style={{ textAlign: "right" }}>Positive %</th>
-                          <th style={{ textAlign: "right" }}>Zero services</th>
-                          <th style={{ textAlign: "right" }}>Avg LOS</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {programs.map((r) => (
-                          <tr key={String(r.program)}>
-                            <td style={{ fontWeight: 500 }}>{String(r.program)}</td>
-                            <td style={{ textAlign: "right" }}>{String(r.active)}</td>
-                            <td style={{ textAlign: "right" }}>{String(r.exits)}</td>
-                            <td style={{ textAlign: "right" }}>{String(r.perm_pct)}%</td>
-                            <td style={{ textAlign: "right" }}>{String(r.positive_pct)}%</td>
-                            <td style={{ textAlign: "right" }}>{String(r.zero_services)}</td>
-                            <td style={{ textAlign: "right" }}>{String(r.avg_los)}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                    <ProgramSummaryTable programs={programs} />
                   </div>
 
                   <div className="card">
