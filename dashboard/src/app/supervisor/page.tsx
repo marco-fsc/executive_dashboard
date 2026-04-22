@@ -30,7 +30,7 @@ export default async function SupervisorPage({
   const sp = await searchParams;
   const rawProgram = sp?.program ?? "";
   const program =
-    userRole.role === "supervisor" && userRole.program
+    userRole.role === "cm_supervisor" && userRole.program
       ? userRole.program
       : rawProgram;
 
@@ -48,7 +48,7 @@ export default async function SupervisorPage({
           </div>
         ) : (
           <>
-            {userRole.role !== "supervisor" && (
+            {userRole.role !== "cm_supervisor" && (
               <form method="get" className="card" style={{ display: "flex", gap: 12, alignItems: "end" }}>
                 <div>
                   <label>
@@ -67,7 +67,7 @@ export default async function SupervisorPage({
                 {program ? <a href="/supervisor" style={{ marginLeft: "auto" }}>Clear</a> : <span style={{ marginLeft: "auto" }} />}
               </form>
             )}
-            {userRole.role === "supervisor" && program && (
+            {userRole.role === "cm_supervisor" && program && (
               <div className="card" style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <span style={{ fontSize: 13, color: "var(--color-muted)" }}>Showing program:</span>
                 <strong>{program}</strong>

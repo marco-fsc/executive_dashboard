@@ -7,8 +7,8 @@ export function TopNav({ email, role }: { email: string | null; role?: UserRole 
   const admin = email ? isAdminEmail(email) : false;
   const effectiveRole: UserRole = admin ? "admin" : (role ?? "executive");
 
-  const showSupervisor = ["admin", "executive", "supervisor"].includes(effectiveRole);
-  const showClients    = ["admin", "executive", "supervisor"].includes(effectiveRole);
+  const showSupervisor = ["admin", "executive", "cm_supervisor"].includes(effectiveRole);
+  const showClients    = ["admin", "executive", "cm_supervisor", "shelter_supervisor"].includes(effectiveRole);
   const showUpload     = ["admin", "executive"].includes(effectiveRole);
 
   return (

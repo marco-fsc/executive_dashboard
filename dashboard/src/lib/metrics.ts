@@ -302,7 +302,7 @@ export interface CmSummaryEntry {
   services_logged: number;
   /** Real services in the last 30 days for this CM's active clients */
   services_last_30d: number;
-  /** Total real services / total person-months active */
+  /** Total real services for active caseload / months since CM's first logged service date */
   avg_services_per_month: number;
   /** Appointment Reminder notes — dated contact but not full service */
   appointment_reminders: number;
@@ -350,11 +350,27 @@ export function cmSummary(ds: Dataset, program?: string | null) {
         s["Service Item Name"] !== ATTEMPTED_ENGAGEMENT_ITEM
     ).length;
 
-    // Avg real services per person-month across active caseload
-    const totalPersonMonths = active.reduce((s, e) => s + ((e["Days in Project"] ?? 0) / 30), 0);
+    // Avg real services per month — denominator is months since CM's first logged service (tenure proxy)
+    const allCmUidPrograms = new Set(group.map((e) => `${e.uid}|${e.Name}`));
+    let firstServiceDate: string | null = null;
+    for (const s of ds.services) {
+      if (
+        allCmUidPrograms.has(`${s.uid}|${s.Name}`) &&
+        s["Service Item Name"] !== APPOINTMENT_REMINDER_ITEM &&
+        s["Service Item Name"] !== ATTEMPTED_ENGAGEMENT_ITEM &&
+        s["Service Attendance Date"] &&
+        (!firstServiceDate || s["Service Attendance Date"] < firstServiceDate)
+      ) {
+        firstServiceDate = s["Service Attendance Date"];
+      }
+    }
     const totalRealSvcs = active.reduce((s, e) => s + (e.service_count ?? 0), 0);
-    const avgSvcPerMonth = totalPersonMonths > 0
-      ? Math.round((totalRealSvcs / totalPersonMonths) * 10) / 10
+    const msPerMonth = 1000 * 60 * 60 * 24 * 30;
+    const monthsSinceFirst = firstServiceDate
+      ? Math.max(1, (Date.now() - new Date(firstServiceDate).getTime()) / msPerMonth)
+      : null;
+    const avgSvcPerMonth = monthsSinceFirst != null
+      ? Math.round((totalRealSvcs / monthsSinceFirst) * 10) / 10
       : 0;
 
     out.push({

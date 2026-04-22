@@ -2,25 +2,26 @@ import { get, put } from "@vercel/blob";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-export type UserRole = "admin" | "executive" | "board" | "supervisor";
+export type UserRole = "admin" | "executive" | "board" | "cm_supervisor" | "shelter_supervisor";
 
 export interface AclEntry {
   role: UserRole;
-  /** Only set when role === "supervisor". Locks the user to a single program. */
+  /** Set for cm_supervisor and shelter_supervisor to lock them to a single program. */
   program?: string;
 }
 
 /**
  * Page-level access: which roles are allowed on each route.
- *   executive         — all pages
- *   board             — executive KPI dashboard only
- *   supervisor        — executive dashboard (own program), supervisor + clients pages (own program)
- *   admin             — everything
+ *   executive          — all pages
+ *   board              — executive KPI dashboard only
+ *   cm_supervisor      — executive dashboard (own program) + case managers + clients (own program)
+ *   shelter_supervisor — executive dashboard (own program) + clients (own program) only
+ *   admin              — everything
  */
 export const PAGE_ROLES = {
-  dashboard: ["admin", "executive", "board", "supervisor"] as UserRole[],
-  supervisor: ["admin", "executive", "supervisor"] as UserRole[],
-  clients: ["admin", "executive", "supervisor"] as UserRole[],
+  dashboard: ["admin", "executive", "board", "cm_supervisor", "shelter_supervisor"] as UserRole[],
+  supervisor: ["admin", "executive", "cm_supervisor"] as UserRole[],
+  clients: ["admin", "executive", "cm_supervisor", "shelter_supervisor"] as UserRole[],
   upload: ["admin", "executive"] as UserRole[],
 } as const;
 

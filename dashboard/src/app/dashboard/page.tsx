@@ -33,8 +33,9 @@ export default async function DashboardPage({
   const sp = await searchParams;
   const rawProgram = sp?.program ?? "";
   // Directors/Supervisors are locked to their assigned program.
+  const isLockedRole = userRole.role === "cm_supervisor" || userRole.role === "shelter_supervisor";
   const program =
-    userRole.role === "supervisor" && userRole.program
+    isLockedRole && userRole.program
       ? userRole.program
       : rawProgram;
   const range = sp?.range ?? "6";
@@ -73,7 +74,7 @@ export default async function DashboardPage({
             </div>
 
             <form method="get" className="card" style={{ display: "flex", gap: 12, alignItems: "end", flexWrap: "wrap" }}>
-              {userRole.role === "supervisor" ? (
+              {isLockedRole ? (
                 <div>
                   <span style={{ fontSize: 13, color: "var(--color-muted)" }}>Program</span>
                   <div style={{ marginTop: 4, fontWeight: 600 }}>{program}</div>

@@ -12,21 +12,24 @@ interface Props {
 type EditableRole = Exclude<UserRole, "admin">;
 
 const ROLE_LABELS: Record<EditableRole, string> = {
-  executive: "Executive",
-  board: "Board",
-  supervisor: "Director/Supervisor",
+  executive:         "Executive",
+  board:             "Board",
+  cm_supervisor:     "Director/CM Supervisor",
+  shelter_supervisor: "Shelter Supervisor",
 };
 
 const ROLE_COLORS: Record<EditableRole, { bg: string; color: string }> = {
-  executive: { bg: "var(--color-brand-dark)", color: "#fff" },
-  board:     { bg: "var(--color-surface-alt)", color: "inherit" },
-  supervisor: { bg: "var(--color-brand)", color: "#fff" },
+  executive:         { bg: "var(--color-brand-dark)", color: "#fff" },
+  board:             { bg: "var(--color-surface-alt)", color: "inherit" },
+  cm_supervisor:     { bg: "var(--color-brand)", color: "#fff" },
+  shelter_supervisor: { bg: "#5b8c5a", color: "#fff" },
 };
 
 const ROLE_DESC: Record<EditableRole, string> = {
-  executive: "All pages and all programs",
-  board:     "Executive KPI dashboard only",
-  supervisor: "Executive dashboard + Supervisor + Clients (own program only)",
+  executive:         "All pages and all programs",
+  board:             "Executive KPI dashboard only",
+  cm_supervisor:     "Executive dashboard + Case Managers + Clients (own program only)",
+  shelter_supervisor: "Executive dashboard + Clients (own program only)",
 };
 
 export function AclEditor({ initialAcl, programs, adminEmail }: Props) {
@@ -59,8 +62,8 @@ export function AclEditor({ initialAcl, programs, adminEmail }: Props) {
     const email = newEmail.trim().toLowerCase();
     if (!email || email === adminEmail) return;
     const entry: AclEntry =
-      newRole === "supervisor"
-        ? { role: "supervisor", program: newProgram || undefined }
+      (newRole === "cm_supervisor" || newRole === "shelter_supervisor")
+        ? { role: newRole, program: newProgram || undefined }
         : { role: newRole };
     const next: Acl = { users: { ...acl.users, [email]: entry } };
     setAcl(next);
@@ -224,11 +227,12 @@ export function AclEditor({ initialAcl, programs, adminEmail }: Props) {
             >
               <option value="executive">Executive</option>
               <option value="board">Board</option>
-              <option value="supervisor">Director/Supervisor</option>
+              <option value="cm_supervisor">Director/CM Supervisor</option>
+              <option value="shelter_supervisor">Shelter Supervisor</option>
             </select>
           </label>
 
-          {newRole === "supervisor" ? (
+          {(newRole === "cm_supervisor" || newRole === "shelter_supervisor") ? (
             <label>
               Program
               <select

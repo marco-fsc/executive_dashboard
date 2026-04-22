@@ -116,7 +116,7 @@ export function CmCardsGroup({ cms, clients, services }: Props) {
                   <div style={{ color: "#0a3622", fontWeight: 700, fontSize: 18 }}>{cm.services_last_30d}</div>
                   <div style={{ fontSize: 11, color: "#0a3622", opacity: 0.8 }}>Svcs (30d)</div>
                 </div>
-                <div style={{ textAlign: "center", padding: "4px 0", borderLeft: "1px solid var(--color-border)" }} title="Average real services per person-month across active caseload">
+                <div style={{ textAlign: "center", padding: "4px 0", borderLeft: "1px solid var(--color-border)" }} title="Average real services per month since this CM's first logged service">
                   <div style={{ color: "#0a3622", fontWeight: 700, fontSize: 18 }}>{cm.avg_services_per_month}</div>
                   <div style={{ fontSize: 11, color: "#0a3622", opacity: 0.8 }}>Avg/mo</div>
                 </div>

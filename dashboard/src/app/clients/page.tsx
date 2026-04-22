@@ -28,8 +28,9 @@ export default async function ClientsPage({
 
   // Supervisors are locked to their assigned program.
   const rawProgram = sp.program ?? "";
+  const isLockedRole = userRole.role === "cm_supervisor" || userRole.role === "shelter_supervisor";
   const program =
-    userRole.role === "supervisor" && userRole.program
+    isLockedRole && userRole.program
       ? userRole.program
       : rawProgram;
   const cm = sp.cm ?? "";
@@ -79,7 +80,7 @@ export default async function ClientsPage({
             </div>
 
             <form method="get" className="card" style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))" }}>
-              {userRole.role === "supervisor" ? (
+              {isLockedRole ? (
                 <div>
                   <span style={{ fontSize: 13, color: "var(--color-muted)" }}>Program</span>
                   <div style={{ marginTop: 4, fontWeight: 600 }}>{program}</div>
