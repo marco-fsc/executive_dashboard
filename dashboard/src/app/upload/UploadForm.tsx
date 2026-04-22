@@ -183,8 +183,6 @@ export default function UploadForm() {
   );
 }
 
-
-  function onFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     setMessage(null);
     if (!file) { setFileStatus({ kind: "none" }); return; }
