@@ -53,13 +53,30 @@ export default function UploadForm() {
       setPhase("uploading");
       setProgress(0);
 
+      // Track real overall progress across multipart chunks.
+      // Vercel Blob splits large files into chunks; onUploadProgress fires
+      // 0→100% per chunk, so we detect chunk resets and accumulate bytes.
+      const totalSize = file.size;
+      let cumulativeBytes = 0;
+      let prevChunkLoaded = 0;
+
       const blob = await upload(
         `csv-uploads/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`,
         file,
         {
           access: "public",
           handleUploadUrl: "/api/data/upload-handle",
-          onUploadProgress: ({ percentage }) => setProgress(Math.round(percentage)),
+          onUploadProgress: ({ loaded }) => {
+            // When loaded drops below prevChunkLoaded a new chunk has started
+            if (loaded < prevChunkLoaded) {
+              cumulativeBytes += prevChunkLoaded;
+            }
+            prevChunkLoaded = loaded;
+            const pct = totalSize > 0
+              ? Math.min(99, Math.round(((cumulativeBytes + loaded) / totalSize) * 100))
+              : 0;
+            setProgress(pct);
+          },
         }
       );
 
