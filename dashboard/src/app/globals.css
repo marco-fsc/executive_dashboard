@@ -165,6 +165,14 @@ tbody tr:hover {
   background: var(--color-surface-alt);
 }
 
+tr.tr-clickable {
+  cursor: pointer;
+}
+
+tr.tr-clickable:hover td {
+  background: #e8f4e8;
+}
+
 /* ------ Forms ------ */
 select, input[type="number"], input[type="text"] {
   padding: 8px 10px;

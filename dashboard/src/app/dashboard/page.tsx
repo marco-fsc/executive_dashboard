@@ -112,19 +112,45 @@ export default async function DashboardPage({
               const can = canKpis(ds, months);
               const programs = programSummary(ds, program || null, months);
               const svc = serviceCounts(ds, { months, program: program || null });
-              const totalPositiveExits = programs.reduce((sum, p) => sum + p.positive_exits, 0);
 
               return (
                 <>
-                  <div className="card" style={{ textAlign: "center", padding: "32px 24px", marginTop: 16 }}>
-                    <div style={{ fontSize: 14, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--color-muted, #666)", marginBottom: 8 }}>
-                      Positive Exits
+                  {/* ── Outcome hero cards ── */}
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 16, marginTop: 16 }}>
+                    <div className="card" style={{ textAlign: "center", padding: "28px 20px" }}>
+                      <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--color-muted, #666)", marginBottom: 8 }}>
+                        Clients Navigated into Shelter
+                      </div>
+                      <div style={{ fontSize: 64, fontWeight: 800, lineHeight: 1, color: "#1a7f4e" }}>
+                        {kpis.temp_housing_exits}
+                      </div>
+                      <div style={{ fontSize: 12, color: "var(--color-muted, #666)", marginTop: 8 }}>
+                        Temporary housing exits · shelter programs
+                      </div>
                     </div>
-                    <div style={{ fontSize: 72, fontWeight: 800, lineHeight: 1, color: "var(--color-primary, #1a7f4e)" }}>
-                      {totalPositiveExits}
+
+                    <div className="card" style={{ textAlign: "center", padding: "28px 20px" }}>
+                      <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--color-muted, #666)", marginBottom: 8 }}>
+                        Clients Housed on Exit
+                      </div>
+                      <div style={{ fontSize: 64, fontWeight: 800, lineHeight: 1, color: "#1a7f4e" }}>
+                        {kpis.perm_housing_exits}
+                      </div>
+                      <div style={{ fontSize: 12, color: "var(--color-muted, #666)", marginTop: 8 }}>
+                        Permanent housing exits · shelter programs
+                      </div>
                     </div>
-                    <div style={{ fontSize: 13, color: "var(--color-muted, #666)", marginTop: 8 }}>
-                      across all programs · selected period
+
+                    <div className="card" style={{ textAlign: "center", padding: "28px 20px" }}>
+                      <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--color-muted, #666)", marginBottom: 8 }}>
+                        CAN Positive Outcomes
+                      </div>
+                      <div style={{ fontSize: 64, fontWeight: 800, lineHeight: 1, color: "#1a7f4e" }}>
+                        {can.positive_exits}
+                      </div>
+                      <div style={{ fontSize: 12, color: "var(--color-muted, #666)", marginTop: 8 }}>
+                        {can.positive_pct}% of CAN exits · selected period
+                      </div>
                     </div>
                   </div>
 

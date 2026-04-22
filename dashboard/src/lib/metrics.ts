@@ -86,6 +86,7 @@ export function executiveKpis(ds: Dataset, program?: string | null, months?: num
   const totalExits = exited.length;
 
   const permExits = exited.filter((e) => e["Destination Category"] === "Permanent Housing Situations").length;
+  const tempExits = exited.filter((e) => e["Destination Category"] === "Temporary Housing Situations").length;
   const homelessExits = exited.filter((e) => e["Destination Category"] === "Homeless Situations").length;
 
   const longStay = active.filter((e) => (e["Days in Project"] ?? 0) >= 90).length;
@@ -117,6 +118,8 @@ export function executiveKpis(ds: Dataset, program?: string | null, months?: num
     total_exits: totalExits,
     perm_housing_exits: permExits,
     perm_housing_pct: pct(permExits, totalExits),
+    temp_housing_exits: tempExits,
+    temp_housing_pct: pct(tempExits, totalExits),
     homeless_exits: homelessExits,
     homeless_exit_pct: pct(homelessExits, totalExits),
     avg_length_of_stay: avgLos,

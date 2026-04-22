@@ -293,7 +293,9 @@ function ClientsTab({ clients, onClientClick }: { clients: ClientEntry[]; onClie
           return (
             <tr key={`${c.uid}-${i}`}
               onClick={() => onClientClick(c)}
-              style={{ borderBottom: "1px solid var(--color-border)", background: attemptingOnly ? "#fff5f5" : i % 2 === 0 ? "white" : "var(--color-surface-alt)", cursor: "pointer" }}>
+              className="tr-clickable"
+              title="Click to view client profile"
+              style={{ borderBottom: "1px solid var(--color-border)", background: attemptingOnly ? "#fff5f5" : i % 2 === 0 ? "white" : "var(--color-surface-alt)" }}>
               <td style={{ padding: "8px 16px", fontFamily: "monospace", fontSize: 11, color: "var(--color-muted)", maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={c.uid}>
                 {c.uid}
               </td>
