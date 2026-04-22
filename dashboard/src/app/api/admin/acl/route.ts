@@ -23,14 +23,15 @@ export async function POST(req: Request) {
   }
 
   // Sanitise: ensure only known roles are persisted
-  const allowed: string[] = ["executive", "board", "supervisor"];
+  const allowed: string[] = ["executive", "board", "cm_supervisor", "shelter_supervisor"];
+  const programRoles = new Set(["cm_supervisor", "shelter_supervisor"]);
   const sanitised: Acl = { users: {} };
   for (const [rawEmail, entry] of Object.entries(body.users)) {
     const lowerEmail = rawEmail.trim().toLowerCase();
     if (!lowerEmail || !entry || !allowed.includes(entry.role)) continue;
     sanitised.users[lowerEmail] = {
       role: entry.role,
-      ...(entry.role === "supervisor" && entry.program
+      ...(programRoles.has(entry.role) && entry.program
         ? { program: String(entry.program) }
         : {}),
     };
