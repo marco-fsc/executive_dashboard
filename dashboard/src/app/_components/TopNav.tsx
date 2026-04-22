@@ -23,10 +23,10 @@ export function TopNav({ email, role }: { email: string | null; role?: UserRole 
           priority
         />
         <Link href="/" className="topnav-brand">
-          FSC Dashboard
+          Home
         </Link>
-        <Link href="/dashboard">Executive</Link>
-        {showSupervisor && <Link href="/supervisor">Supervisor</Link>}
+        <Link href="/dashboard">Dashboard</Link>
+        {showSupervisor && <Link href="/supervisor">Case Management</Link>}
         {showClients    && <Link href="/clients">Clients</Link>}
         {showUpload     && <Link href="/upload">Upload</Link>}
         {admin && <Link href="/admin">Admin</Link>}

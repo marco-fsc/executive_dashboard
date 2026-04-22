@@ -32,6 +32,7 @@ interface Props {
   cms: CmSummaryEntry[];
   clients: ClientEntry[];
   services: ServiceLogEntry[];
+  rangeDays?: number;
 }
 
 type DrawerTab = "clients" | "service-log";
@@ -55,7 +56,7 @@ function CategoryBadge({ cat }: { cat: "real" | "reminder" }) {
 
 // ── main component ─────────────────────────────────────────────────────────────
 
-export function CmCardsGroup({ cms, clients, services }: Props) {
+export function CmCardsGroup({ cms, clients, services, rangeDays }: Props) {
   const [selectedCm, setSelectedCm] = useState<string | null>(null);
   const [tab, setTab] = useState<DrawerTab>("clients");
 
@@ -98,13 +99,22 @@ export function CmCardsGroup({ cms, clients, services }: Props) {
               {/* header */}
               <div style={{ background: "var(--color-surface-alt)", padding: "12px 18px", display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid var(--color-border)" }}>
                 <strong style={{ color: "var(--color-brand-dark)" }}>{String(cm.cm)}</strong>
-                <span className="badge badge-active">{cm.active_clients} sheltered</span>
+                <span className="badge badge-active">{cm.active_clients} active clients</span>
               </div>
 
               {/* outcome stats */}
               <div style={{ padding: "12px 18px 0", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px 24px", fontSize: 14 }}>
-                <div>Perm exits <strong style={{ float: "right" }}>{cm.perm_exits}</strong></div>
-                <div>Perm exit % <strong style={{ float: "right" }}>{cm.perm_exit_pct}%</strong></div>
+                {cm.is_can ? (
+                  <>
+                    <div>Positive outcomes <strong style={{ float: "right" }}>{cm.positive_exits}</strong></div>
+                    <div>Positive outcome % <strong style={{ float: "right" }}>{cm.positive_exit_pct}%</strong></div>
+                  </>
+                ) : (
+                  <>
+                    <div>Perm exits <strong style={{ float: "right" }}>{cm.perm_exits}</strong></div>
+                    <div>Perm exit % <strong style={{ float: "right" }}>{cm.perm_exit_pct}%</strong></div>
+                  </>
+                )}
                 <div>Homeless exits <strong style={{ float: "right" }}>{cm.homeless_exits}</strong></div>
                 <div title="Active clients with no real service attended in the past 21 days">No real svc (21d) <strong style={{ float: "right" }}>{cm.no_real_svc_21d}</strong></div>
                 <div>High risk <strong style={{ float: "right" }}>{cm.high_risk_clients}</strong></div>
@@ -112,13 +122,13 @@ export function CmCardsGroup({ cms, clients, services }: Props) {
 
               {/* engagement breakdown */}
               <div style={{ margin: "10px 18px", padding: "8px 0", background: "var(--color-surface-alt)", borderRadius: 6, display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", border: "1px solid var(--color-border)" }}>
-                <div style={{ textAlign: "center", padding: "4px 0" }} title="Real services in the last 30 days">
+                <div style={{ textAlign: "center", padding: "4px 0" }} title={`Real services in the last ${rangeDays ?? 30} days`}>
                   <div style={{ color: "#0a3622", fontWeight: 700, fontSize: 18 }}>{cm.services_last_30d}</div>
-                  <div style={{ fontSize: 11, color: "#0a3622", opacity: 0.8 }}>Svcs (30d)</div>
+                  <div style={{ fontSize: 11, color: "#0a3622", opacity: 0.8 }}>Svcs ({rangeDays ?? 30}d)</div>
                 </div>
                 <div style={{ textAlign: "center", padding: "4px 0", borderLeft: "1px solid var(--color-border)" }} title="Average real services per month since this CM's first logged service">
                   <div style={{ color: "#0a3622", fontWeight: 700, fontSize: 18 }}>{cm.avg_services_per_month}</div>
-                  <div style={{ fontSize: 11, color: "#0a3622", opacity: 0.8 }}>Avg/mo</div>
+                  <div style={{ fontSize: 11, color: "#0a3622", opacity: 0.8 }}>Services per Month Average</div>
                 </div>
                 <div style={{ textAlign: "center", padding: "4px 0", borderLeft: "1px solid var(--color-border)", borderRight: "1px solid var(--color-border)" }} title="Appointment Reminders: dated note, not full service">
                   <div style={{ color: "#856404", fontWeight: 700, fontSize: 18 }}>{cm.appointment_reminders}</div>
@@ -243,6 +253,7 @@ function ClientsTab({ clients }: { clients: ClientEntry[] }) {
           <th style={{ padding: "10px 8px", textAlign: "center" }} title="Appointment Reminders">Rem.</th>
           <th style={{ padding: "10px 8px", textAlign: "left" }}>Risk</th>
           <th style={{ padding: "10px 8px", textAlign: "left" }}>Status</th>
+          <th style={{ padding: "10px 8px", textAlign: "left" }}>Destination</th>
           <th style={{ padding: "10px 16px", textAlign: "left" }}>Flags</th>
         </tr>
       </thead>
@@ -286,10 +297,13 @@ function ClientsTab({ clients }: { clients: ClientEntry[] }) {
               </td>
               <td style={{ padding: "8px" }}>
                 {c.exit_date ? (
-                  <span title={c.destination} style={{ fontSize: 11, color: "var(--color-muted)" }}>
+                  <span style={{ fontSize: 11, color: "var(--color-muted)" }}>
                     Exited {c.exit_date}
                   </span>
                 ) : <span className="badge badge-active">Active</span>}
+              </td>
+              <td style={{ padding: "8px", fontSize: 11, color: "var(--color-muted)" }}>
+                {c.destination || "—"}
               </td>
               <td style={{ padding: "8px 16px", fontSize: 11, color: "var(--color-muted)" }}>
                 {c.flags.join(", ") || "—"}

@@ -112,9 +112,22 @@ export default async function DashboardPage({
               const can = canKpis(ds, months);
               const programs = programSummary(ds, program || null, months);
               const svc = serviceCounts(ds, { months, program: program || null });
+              const totalPositiveExits = programs.reduce((sum, p) => sum + p.positive_exits, 0);
 
               return (
                 <>
+                  <div className="card" style={{ textAlign: "center", padding: "32px 24px", marginTop: 16 }}>
+                    <div style={{ fontSize: 14, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--color-muted, #666)", marginBottom: 8 }}>
+                      Positive Exits
+                    </div>
+                    <div style={{ fontSize: 72, fontWeight: 800, lineHeight: 1, color: "var(--color-primary, #1a7f4e)" }}>
+                      {totalPositiveExits}
+                    </div>
+                    <div style={{ fontSize: 13, color: "var(--color-muted, #666)", marginTop: 8 }}>
+                      across all programs · selected period
+                    </div>
+                  </div>
+
                   <div className="kpi-grid" style={{ marginTop: 16 }}>
                     <div className="kpi-card">
                       <div className="kpi-label">Active clients</div>

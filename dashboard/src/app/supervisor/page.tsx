@@ -2,7 +2,7 @@ import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { TopNav } from "@/app/_components/TopNav";
 import { readCurrentDataset } from "@/lib/blob-dataset-store";
-import { cmSummary, programList, clientList, PROGRAM_ORDER } from "@/lib/metrics";
+import { cmSummary, programList, clientList, PROGRAM_ORDER, CAN_IDENTIFIER } from "@/lib/metrics";
 import { readAcl, resolveRole, PAGE_ROLES } from "@/lib/acl";
 import { CmCardsGroup } from "./CmCardsGroup";
 import type { ClientEntry, ServiceLogEntry } from "./CmCardsGroup";
@@ -12,7 +12,7 @@ const APPOINTMENT_REMINDER = "Appointment Reminders";
 export default async function SupervisorPage({
   searchParams,
 }: {
-  searchParams?: Promise<{ program?: string }>;
+  searchParams?: Promise<{ program?: string; range?: string }>;
 }) {
   const session = await auth();
   if (!session) {
@@ -33,6 +33,9 @@ export default async function SupervisorPage({
     userRole.role === "cm_supervisor" && userRole.program
       ? userRole.program
       : rawProgram;
+
+  const rawRange = sp?.range ?? "";
+  const days = rawRange === "30" ? 30 : rawRange === "60" ? 60 : rawRange === "180" ? 180 : rawRange === "365" ? 365 : null;
 
   const ds = await readCurrentDataset();
 
@@ -63,8 +66,20 @@ export default async function SupervisorPage({
                     </select>
                   </label>
                 </div>
+                <div>
+                  <label>
+                    Date range
+                    <select name="range" defaultValue={rawRange} style={{ display: "block", marginTop: 6 }}>
+                      <option value="">All time</option>
+                      <option value="30">Past 30 days</option>
+                      <option value="60">Past 60 days</option>
+                      <option value="180">Past 180 days</option>
+                      <option value="365">Past year</option>
+                    </select>
+                  </label>
+                </div>
                 <button type="submit">Apply</button>
-                {program ? <a href="/supervisor" style={{ marginLeft: "auto" }}>Clear</a> : <span style={{ marginLeft: "auto" }} />}
+                {(program || rawRange) ? <a href="/supervisor" style={{ marginLeft: "auto" }}>Clear</a> : <span style={{ marginLeft: "auto" }} />}
               </form>
             )}
             {userRole.role === "cm_supervisor" && program && (
@@ -82,11 +97,16 @@ export default async function SupervisorPage({
                 ? [program]
                 : [
                     ...PROGRAM_ORDER.filter((p) => allPrograms.includes(p)),
-                    ...allPrograms.filter((p) => !(PROGRAM_ORDER as readonly string[]).includes(p)),
+                    ...allPrograms.filter(
+                      (p) =>
+                        !(PROGRAM_ORDER as readonly string[]).includes(p) &&
+                        !p.toLowerCase().includes(CAN_IDENTIFIER.toLowerCase())
+                    ),
+                    ...allPrograms.filter((p) => p.toLowerCase().includes(CAN_IDENTIFIER.toLowerCase())),
                   ];
 
               return programsToShow.map((prog) => {
-                const cms = cmSummary(ds, prog);
+                const cms = cmSummary(ds, prog, days);
                 if (!cms.length) return null;
                 const progClients = allClients.filter((c) => c.program === prog);
                 const progServices: ServiceLogEntry[] = ds.services
@@ -117,7 +137,7 @@ export default async function SupervisorPage({
                     >
                       {prog}
                     </h2>
-                    <CmCardsGroup cms={cms} clients={progClients} services={progServices} />
+                    <CmCardsGroup cms={cms} clients={progClients} services={progServices} rangeDays={days ?? undefined} />
                   </section>
                 );
               });

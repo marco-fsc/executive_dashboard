@@ -300,7 +300,7 @@ export interface CmSummaryEntry {
   homeless_exits: number;
   /** Real services (excludes Attempted Engagement + Appointment Reminders) */
   services_logged: number;
-  /** Real services in the last 30 days for this CM's active clients */
+  /** Real services in the selected period (defaults to last 30 days) for this CM's active clients */
   services_last_30d: number;
   /** Total real services for active caseload / months since CM's first logged service date */
   avg_services_per_month: number;
@@ -311,9 +311,14 @@ export interface CmSummaryEntry {
   /** Active clients with no real service in the past 21 days (or never) */
   no_real_svc_21d: number;
   high_risk_clients: number;
+  /** Positive outcomes (CAN team: perm + temp + good institutional + other + shelter-connected homeless) */
+  positive_exits: number;
+  positive_exit_pct: number;
+  /** True when this CM belongs to a CAN Team program */
+  is_can: boolean;
 }
 
-export function cmSummary(ds: Dataset, program?: string | null) {
+export function cmSummary(ds: Dataset, program?: string | null, days?: number | null) {
   let rows = ds.enrollments;
   if (program) rows = rows.filter((e) => e.Name === program);
 
@@ -323,29 +328,62 @@ export function cmSummary(ds: Dataset, program?: string | null) {
     byCm.set(cm, [...(byCm.get(cm) ?? []), e]);
   }
 
+  // Compute cutoff date for exit filtering
+  let exitCutoff: string | null = null;
+  if (days) {
+    const d = new Date();
+    d.setDate(d.getDate() - days);
+    exitCutoff = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  }
+
   const out: CmSummaryEntry[] = [];
   for (const [cm, group] of byCm.entries()) {
+    const isCan = (group[0]?.Name ?? "").toLowerCase().includes(CAN_IDENTIFIER.toLowerCase());
     const active = group.filter((e) => String(e["Active in Project"]) === "Yes");
-    const exited = group.filter((e) => String(e["Active in Project"]) === "No");
+    const exitedAll = group.filter((e) => String(e["Active in Project"]) === "No");
+    const exited = exitCutoff
+      ? exitedAll.filter((e) => {
+          const d = e["Project Exit Date"];
+          return d ? d >= exitCutoff! : false;
+        })
+      : exitedAll;
 
     const perm = exited.filter((e) => e["Destination Category"] === "Permanent Housing Situations").length;
     const homeless = exited.filter((e) => e["Destination Category"] === "Homeless Situations").length;
     const highRisk = active.filter((e) => e["Risk Level"] === "High").length;
+
+    // Positive exits (CAN logic: perm + temp + good institutional + other + shelter-homeless)
+    const canExclude = /jail|prison|hospital/i;
+    const canShelter = /Emergency shelter|Safe Haven/i;
+    let positiveExits = 0;
+    for (const e of exited) {
+      const cat = e["Destination Category"] ?? "";
+      const dest = String(e.Destination ?? "");
+      const institutionalGood = cat === "Institutional Situations" && !canExclude.test(dest);
+      const pos =
+        cat === "Permanent Housing Situations" ||
+        cat === "Temporary Housing Situations" ||
+        institutionalGood ||
+        cat === "Other" ||
+        (cat === "Homeless Situations" && canShelter.test(dest));
+      if (pos) positiveExits += 1;
+    }
     // No real service in 21 days: last real service was >21 days ago, or client never had one
     const noRealSvc21d = active.filter((e) => {
       const d = e["Days Since Last Real Service"];
       return d === null || d === undefined || (d as number) > 21;
     }).length;
 
-    // Services in the last 30 days (real only, matched by uid+program enrollment key)
-    const today30 = new Date();
-    today30.setDate(today30.getDate() - 30);
-    const cutoff30 = `${today30.getFullYear()}-${String(today30.getMonth() + 1).padStart(2, "0")}-${String(today30.getDate()).padStart(2, "0")}`;
+    // Services in the selected period (defaults to 30 days)
+    const periodDays = days ?? 30;
+    const todayPeriod = new Date();
+    todayPeriod.setDate(todayPeriod.getDate() - periodDays);
+    const cutoffPeriod = `${todayPeriod.getFullYear()}-${String(todayPeriod.getMonth() + 1).padStart(2, "0")}-${String(todayPeriod.getDate()).padStart(2, "0")}`;
     const activeEnrollmentKeys = new Set(active.map((e) => `${e.uid}|${e.Name}`));
     const svcs30d = ds.services.filter(
       (s) =>
         activeEnrollmentKeys.has(`${s.uid}|${s.Name}`) &&
-        s["Service Attendance Date"] >= cutoff30 &&
+        s["Service Attendance Date"] >= cutoffPeriod &&
         s["Service Item Name"] !== APPOINTMENT_REMINDER_ITEM &&
         s["Service Item Name"] !== ATTEMPTED_ENGAGEMENT_ITEM
     ).length;
@@ -388,6 +426,9 @@ export function cmSummary(ds: Dataset, program?: string | null) {
       attempted_engagements: active.reduce((s, e) => s + (e.attempted_engagement_count ?? 0), 0),
       no_real_svc_21d: noRealSvc21d,
       high_risk_clients: highRisk,
+      positive_exits: positiveExits,
+      positive_exit_pct: pct(positiveExits, exited.length),
+      is_can: isCan,
     });
   }
 
