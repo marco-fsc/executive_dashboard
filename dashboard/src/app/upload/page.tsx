@@ -19,7 +19,7 @@ export default async function UploadPage() {
 
   return (
     <>
-      <TopNav email={session.user?.email ?? null} />
+      <TopNav email={session.user?.email ?? null} role={userRole.role} />
       <main>
         <h1>Upload Data</h1>
         <p>Upload the latest SUP2 CSV export. Data is stored privately in Vercel Blob.</p>

@@ -12,13 +12,13 @@ export interface AclEntry {
 
 /**
  * Page-level access: which roles are allowed on each route.
- *   executive — all pages (supervisor, clients, upload, dashboard)
- *   board     — executive KPI dashboard only
- *   supervisor — supervisor + clients pages (own program only)
- *   admin     — everything
+ *   executive         — all pages
+ *   board             — executive KPI dashboard only
+ *   supervisor        — executive dashboard (own program), supervisor + clients pages (own program)
+ *   admin             — everything
  */
 export const PAGE_ROLES = {
-  dashboard: ["admin", "executive", "board"] as UserRole[],
+  dashboard: ["admin", "executive", "board", "supervisor"] as UserRole[],
   supervisor: ["admin", "executive", "supervisor"] as UserRole[],
   clients: ["admin", "executive", "supervisor"] as UserRole[],
   upload: ["admin", "executive"] as UserRole[],

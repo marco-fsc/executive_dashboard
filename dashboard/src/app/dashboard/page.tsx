@@ -31,7 +31,12 @@ export default async function DashboardPage({
   }
 
   const sp = await searchParams;
-  const program = sp?.program ?? "";
+  const rawProgram = sp?.program ?? "";
+  // Directors/Supervisors are locked to their assigned program.
+  const program =
+    userRole.role === "supervisor" && userRole.program
+      ? userRole.program
+      : rawProgram;
   const range = sp?.range ?? "6";
   const months = monthsFromRange(range);
 
@@ -39,7 +44,7 @@ export default async function DashboardPage({
 
   return (
     <>
-      <TopNav email={session.user?.email ?? null} />
+      <TopNav email={session.user?.email ?? null} role={userRole.role} />
       <main>
         <h1>Executive Dashboard</h1>
 
@@ -68,17 +73,25 @@ export default async function DashboardPage({
             </div>
 
             <form method="get" className="card" style={{ display: "flex", gap: 12, alignItems: "end", flexWrap: "wrap" }}>
-              <label>
-                Program
-                <select name="program" defaultValue={program} style={{ display: "block", marginTop: 6, minWidth: 260 }}>
-                  <option value="">All Programs</option>
-                  {programList(ds).map((p) => (
-                    <option key={p} value={p}>
-                      {p}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              {userRole.role === "supervisor" ? (
+                <div>
+                  <span style={{ fontSize: 13, color: "var(--color-muted)" }}>Program</span>
+                  <div style={{ marginTop: 4, fontWeight: 600 }}>{program}</div>
+                  <input type="hidden" name="program" value={program} />
+                </div>
+              ) : (
+                <label>
+                  Program
+                  <select name="program" defaultValue={program} style={{ display: "block", marginTop: 6, minWidth: 260 }}>
+                    <option value="">All Programs</option>
+                    {programList(ds).map((p) => (
+                      <option key={p} value={p}>
+                        {p}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              )}
 
               <label>
                 Date range

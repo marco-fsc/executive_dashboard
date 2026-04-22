@@ -38,7 +38,7 @@ export default async function SupervisorPage({
 
   return (
     <>
-      <TopNav email={session.user?.email ?? null} />
+      <TopNav email={session.user?.email ?? null} role={userRole.role} />
       <main>
         <h1>Supervisor Dashboard</h1>
 

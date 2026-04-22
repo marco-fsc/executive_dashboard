@@ -61,7 +61,7 @@ export default async function ClientsPage({
 
   return (
     <>
-      <TopNav email={session.user?.email ?? null} />
+      <TopNav email={session.user?.email ?? null} role={userRole.role} />
       <main>
         <h1>Client List</h1>
 

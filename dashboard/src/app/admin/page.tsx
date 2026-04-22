@@ -21,7 +21,7 @@ export default async function AdminPage() {
 
   return (
     <>
-      <TopNav email={email} />
+      <TopNav email={email} role="admin" />
       <main>
         <h1>Admin — Access Control</h1>
         <p style={{ color: "var(--color-muted)", marginBottom: 8, maxWidth: 640 }}>
@@ -30,7 +30,7 @@ export default async function AdminPage() {
         <ul style={{ color: "var(--color-muted)", marginBottom: 24, fontSize: 13, paddingLeft: 20 }}>
           <li><strong>Executive</strong> — all pages and all programs</li>
           <li><strong>Board</strong> — executive KPI dashboard only (high-level view)</li>
-          <li><strong>Supervisor</strong> — supervisor + client pages, locked to their program</li>
+          <li><strong>Director/Supervisor</strong> — executive dashboard + supervisor + client pages, locked to their program</li>
         </ul>
         <AclEditor initialAcl={acl} programs={PROGRAM_ORDER} adminEmail={adminEmail} />
       </main>

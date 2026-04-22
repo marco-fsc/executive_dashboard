@@ -1,9 +1,15 @@
 import Image from "next/image";
 import Link from "next/link";
 import { isAdminEmail } from "@/lib/acl";
+import type { UserRole } from "@/lib/acl";
 
-export function TopNav({ email }: { email: string | null }) {
+export function TopNav({ email, role }: { email: string | null; role?: UserRole | null }) {
   const admin = email ? isAdminEmail(email) : false;
+  const effectiveRole: UserRole = admin ? "admin" : (role ?? "executive");
+
+  const showSupervisor = ["admin", "executive", "supervisor"].includes(effectiveRole);
+  const showClients    = ["admin", "executive", "supervisor"].includes(effectiveRole);
+  const showUpload     = ["admin", "executive"].includes(effectiveRole);
 
   return (
     <nav className="topnav">
@@ -20,9 +26,9 @@ export function TopNav({ email }: { email: string | null }) {
           FSC Dashboard
         </Link>
         <Link href="/dashboard">Executive</Link>
-        <Link href="/supervisor">Supervisor</Link>
-        <Link href="/clients">Clients</Link>
-        <Link href="/upload">Upload</Link>
+        {showSupervisor && <Link href="/supervisor">Supervisor</Link>}
+        {showClients    && <Link href="/clients">Clients</Link>}
+        {showUpload     && <Link href="/upload">Upload</Link>}
         {admin && <Link href="/admin">Admin</Link>}
         <span className="topnav-email">{email ?? ""}</span>
       </div>

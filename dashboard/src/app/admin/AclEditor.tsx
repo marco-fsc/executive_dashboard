@@ -14,7 +14,7 @@ type EditableRole = Exclude<UserRole, "admin">;
 const ROLE_LABELS: Record<EditableRole, string> = {
   executive: "Executive",
   board: "Board",
-  supervisor: "Supervisor",
+  supervisor: "Director/Supervisor",
 };
 
 const ROLE_COLORS: Record<EditableRole, { bg: string; color: string }> = {
@@ -26,7 +26,7 @@ const ROLE_COLORS: Record<EditableRole, { bg: string; color: string }> = {
 const ROLE_DESC: Record<EditableRole, string> = {
   executive: "All pages and all programs",
   board:     "Executive KPI dashboard only",
-  supervisor: "Supervisor + Clients (own program only)",
+  supervisor: "Executive dashboard + Supervisor + Clients (own program only)",
 };
 
 export function AclEditor({ initialAcl, programs, adminEmail }: Props) {
@@ -224,7 +224,7 @@ export function AclEditor({ initialAcl, programs, adminEmail }: Props) {
             >
               <option value="executive">Executive</option>
               <option value="board">Board</option>
-              <option value="supervisor">Supervisor</option>
+              <option value="supervisor">Director/Supervisor</option>
             </select>
           </label>
 
