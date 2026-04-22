@@ -30,9 +30,24 @@ export async function POST(req: Request) {
   }
 
   const csvText = await (file as unknown as { text: () => Promise<string> }).text();
-  const dataset = buildDatasetFromRawCsv(csvText, name || undefined);
 
-  await writeCurrentDataset(dataset);
+  let dataset;
+  try {
+    dataset = buildDatasetFromRawCsv(csvText, name || undefined);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("[upload] CSV ingest failed:", message, { name, size });
+    return NextResponse.json({ error: `Processing failed: ${message}` }, { status: 422 });
+  }
 
+  try {
+    await writeCurrentDataset(dataset);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("[upload] Blob write failed:", message);
+    return NextResponse.json({ error: `Storage failed: ${message}` }, { status: 500 });
+  }
+
+  console.info("[upload] success:", { name, size, enrollments: dataset.enrollments.length, services: dataset.services.length });
   return NextResponse.json({ ok: true, meta: dataset.meta });
 }

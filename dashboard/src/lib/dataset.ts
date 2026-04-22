@@ -26,6 +26,10 @@ export interface Enrollment {
   "Substance Use Disorder"?: string;
   "General Health Status"?: string;
   "Cash Income Amount"?: number | null;
+  Medicare?: string;
+  "Hours Worked Last Week"?: string;
+  "Employment Seeking"?: string;
+  "Employment Tenure"?: string;
 
   "Risk Score"?: number;
   "Risk Level"?: "Low" | "Medium" | "High" | string;

@@ -151,6 +151,10 @@ type SvcAgg = {
         "Substance Use Disorder": String(raw["Substance Use Disorder"] ?? "") || undefined,
         "General Health Status": String(raw["General Health Status"] ?? "") || undefined,
         "Cash Income Amount": parseCashIncome(raw),
+        Medicare: String(raw["Medicare"] ?? "") || undefined,
+        "Hours Worked Last Week": raw["Hours Worked Last Week"] != null && String(raw["Hours Worked Last Week"]).trim() !== "" ? String(raw["Hours Worked Last Week"]).trim() : undefined,
+        "Employment Seeking": String(raw["Employment Seeking"] ?? "") || undefined,
+        "Employment Tenure": String(raw["Employment Tenure"] ?? "") || undefined,
         _snapshotSvcDate: svcDate || undefined,
       });
     }

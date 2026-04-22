@@ -18,6 +18,18 @@ export interface ClientEntry {
   flags: string[];
   destination: string;
   exit_date: string;
+  enrollment_date: string;
+  cash_income: number | null;
+  general_health: string;
+  mental_health: string;
+  chronic_health: string;
+  developmental: string;
+  physical: string;
+  substance_use: string;
+  medicare: string;
+  hours_worked_last_week: string;
+  employment_seeking: string;
+  employment_tenure: string;
 }
 
 export interface ServiceLogEntry {
@@ -59,6 +71,7 @@ function CategoryBadge({ cat }: { cat: "real" | "reminder" }) {
 export function CmCardsGroup({ cms, clients, services, rangeDays }: Props) {
   const [selectedCm, setSelectedCm] = useState<string | null>(null);
   const [tab, setTab] = useState<DrawerTab>("clients");
+  const [profileClient, setProfileClient] = useState<ClientEntry | null>(null);
 
   const cmName = selectedCm ?? "";
 
@@ -83,6 +96,7 @@ export function CmCardsGroup({ cms, clients, services, rangeDays }: Props) {
   function openDrawer(cm: string) {
     setSelectedCm(cm);
     setTab("clients");
+    setProfileClient(null);
   }
 
   return (
@@ -224,9 +238,19 @@ export function CmCardsGroup({ cms, clients, services, rangeDays }: Props) {
 
         {/* Drawer body */}
         <div style={{ flex: 1, overflowY: "auto" }}>
-          {tab === "clients" && <ClientsTab clients={drawerClients} />}
-          {tab === "service-log" && (
-            <ServiceLogTab services={drawerServices} totalAttempted={totalAttempted} />
+          {profileClient ? (
+            <ClientProfile
+              client={profileClient}
+              services={drawerServices.filter((s) => s.uid === profileClient.uid)}
+              onBack={() => setProfileClient(null)}
+            />
+          ) : (
+            <>
+              {tab === "clients" && <ClientsTab clients={drawerClients} onClientClick={setProfileClient} />}
+              {tab === "service-log" && (
+                <ServiceLogTab services={drawerServices} totalAttempted={totalAttempted} />
+              )}
+            </>
           )}
         </div>
       </div>
@@ -236,7 +260,7 @@ export function CmCardsGroup({ cms, clients, services, rangeDays }: Props) {
 
 // ── Clients tab ────────────────────────────────────────────────────────────────
 
-function ClientsTab({ clients }: { clients: ClientEntry[] }) {
+function ClientsTab({ clients, onClientClick }: { clients: ClientEntry[]; onClientClick: (c: ClientEntry) => void }) {
   if (clients.length === 0) {
     return <p style={{ padding: 24, color: "var(--color-muted)" }}>No clients found.</p>;
   }
@@ -267,7 +291,9 @@ function ClientsTab({ clients }: { clients: ClientEntry[] }) {
           const attemptingOnly = c.attempted_engagements > 0 && c.services_count === 0 && !c.exit_date;
 
           return (
-            <tr key={`${c.uid}-${i}`} style={{ borderBottom: "1px solid var(--color-border)", background: attemptingOnly ? "#fff5f5" : i % 2 === 0 ? "white" : "var(--color-surface-alt)" }}>
+            <tr key={`${c.uid}-${i}`}
+              onClick={() => onClientClick(c)}
+              style={{ borderBottom: "1px solid var(--color-border)", background: attemptingOnly ? "#fff5f5" : i % 2 === 0 ? "white" : "var(--color-surface-alt)", cursor: "pointer" }}>
               <td style={{ padding: "8px 16px", fontFamily: "monospace", fontSize: 11, color: "var(--color-muted)", maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={c.uid}>
                 {c.uid}
               </td>
@@ -383,6 +409,139 @@ function ServiceLogTab({ services, totalAttempted }: { services: ServiceLogEntry
           </div>
         ))
       )}
+    </div>
+  );
+}
+
+// ── Client Profile panel ───────────────────────────────────────────────────────
+
+function ProfileRow({ label, value, highlight }: { label: string; value: string | number | null | undefined; highlight?: boolean }) {
+  const display = value === null || value === undefined || String(value).trim() === "" ? "—" : String(value);
+  return (
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", padding: "5px 0", borderBottom: "1px solid var(--color-border)", fontSize: 13 }}>
+      <span style={{ color: "var(--color-muted)", flexShrink: 0, marginRight: 12 }}>{label}</span>
+      <strong style={{ textAlign: "right", color: highlight ? "#842029" : "inherit" }}>{display}</strong>
+    </div>
+  );
+}
+
+function isYesValue(v: string | undefined | null) {
+  return String(v ?? "").toLowerCase() === "yes";
+}
+
+function ClientProfile({ client, services, onBack }: { client: ClientEntry; services: ServiceLogEntry[]; onBack: () => void }) {
+  const riskClass =
+    client.risk_level === "High" ? "badge-high" :
+    client.risk_level === "Medium" ? "badge-medium" : "badge-low";
+
+  const sortedServices = [...services].sort((a, b) => b.attendance_date.localeCompare(a.attendance_date));
+
+  const incomeDisplay = client.cash_income != null
+    ? `$${client.cash_income.toLocaleString()}`
+    : "—";
+
+  return (
+    <div style={{ padding: "16px 24px" }}>
+      {/* Back + identity */}
+      <button
+        onClick={onBack}
+        style={{ background: "none", border: "none", cursor: "pointer", padding: 0, fontSize: 13, color: "var(--color-brand-dark)", fontWeight: 600, marginBottom: 16, display: "flex", alignItems: "center", gap: 6 }}
+      >
+        ← Back to clients
+      </button>
+
+      {/* ID card */}
+      <div style={{ background: "var(--color-surface-alt)", border: "1px solid var(--color-border)", borderRadius: 8, padding: "14px 18px", marginBottom: 16 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 8 }}>
+          <div>
+            <div style={{ fontFamily: "monospace", fontSize: 13, color: "var(--color-muted)" }}>UID</div>
+            <div style={{ fontWeight: 700, fontSize: 16 }}>{client.uid}</div>
+          </div>
+          <span className={`badge ${riskClass}`} style={{ fontSize: 13 }}>{client.risk_level || "—"} Risk</span>
+        </div>
+        <div style={{ marginTop: 10, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "6px 20px", fontSize: 13 }}>
+          <div><span style={{ color: "var(--color-muted)" }}>Program: </span><strong>{client.program}</strong></div>
+          <div><span style={{ color: "var(--color-muted)" }}>Case Manager: </span><strong>{client.cm || "—"}</strong></div>
+          <div><span style={{ color: "var(--color-muted)" }}>Enrolled: </span><strong>{client.enrollment_date || "—"}</strong></div>
+          <div><span style={{ color: "var(--color-muted)" }}>Days in program: </span><strong>{client.days_in_program ?? "—"}</strong></div>
+          {client.exit_date && <div><span style={{ color: "var(--color-muted)" }}>Exited: </span><strong>{client.exit_date}</strong></div>}
+          {client.destination && <div><span style={{ color: "var(--color-muted)" }}>Destination: </span><strong>{client.destination}</strong></div>}
+        </div>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
+
+        {/* Health & Disability */}
+        <div style={{ border: "1px solid var(--color-border)", borderRadius: 8, overflow: "hidden" }}>
+          <div style={{ background: "var(--color-surface-alt)", padding: "8px 14px", fontWeight: 700, fontSize: 12, letterSpacing: "0.05em", textTransform: "uppercase", color: "var(--color-brand-dark)", borderBottom: "1px solid var(--color-border)" }}>
+            Health &amp; Disability
+          </div>
+          <div style={{ padding: "4px 14px 10px" }}>
+            <ProfileRow label="General Health" value={client.general_health} highlight={client.general_health === "Poor"} />
+            <ProfileRow label="Mental Health" value={isYesValue(client.mental_health) ? "Yes" : "No"} highlight={isYesValue(client.mental_health)} />
+            <ProfileRow label="Chronic Health" value={isYesValue(client.chronic_health) ? "Yes" : "No"} highlight={isYesValue(client.chronic_health)} />
+            <ProfileRow label="Developmental" value={isYesValue(client.developmental) ? "Yes" : "No"} highlight={isYesValue(client.developmental)} />
+            <ProfileRow label="Physical" value={isYesValue(client.physical) ? "Yes" : "No"} highlight={isYesValue(client.physical)} />
+            <ProfileRow label="Substance Use Disorder" value={client.substance_use || "No"} highlight={client.substance_use !== "" && client.substance_use.toLowerCase() !== "no"} />
+          </div>
+        </div>
+
+        {/* Economic & Employment */}
+        <div style={{ border: "1px solid var(--color-border)", borderRadius: 8, overflow: "hidden" }}>
+          <div style={{ background: "var(--color-surface-alt)", padding: "8px 14px", fontWeight: 700, fontSize: 12, letterSpacing: "0.05em", textTransform: "uppercase", color: "var(--color-brand-dark)", borderBottom: "1px solid var(--color-border)" }}>
+            Economic &amp; Employment
+          </div>
+          <div style={{ padding: "4px 14px 10px" }}>
+            <ProfileRow label="Total Cash Income" value={incomeDisplay} />
+            <ProfileRow label="Medicare" value={client.medicare || "—"} />
+            <ProfileRow label="Hours Worked Last Week" value={client.hours_worked_last_week || "—"} />
+            <ProfileRow label="Employment Seeking" value={client.employment_seeking || "—"} />
+            <ProfileRow label="Employment Tenure" value={client.employment_tenure || "—"} />
+          </div>
+        </div>
+      </div>
+
+      {/* Engagement summary */}
+      <div style={{ display: "flex", gap: 12, marginBottom: 16, flexWrap: "wrap" }}>
+        <div style={{ flex: 1, minWidth: 120, background: "#f6fff8", border: "1px solid #b7dfbf", borderRadius: 8, padding: "10px 16px", textAlign: "center" }}>
+          <div style={{ fontSize: 28, fontWeight: 800, color: "#0a3622" }}>{client.services_count}</div>
+          <div style={{ fontSize: 11, color: "#0a3622", opacity: 0.8 }}>Real Services</div>
+        </div>
+        <div style={{ flex: 1, minWidth: 120, background: "#fff5f5", border: "1px solid #f5c6cb", borderRadius: 8, padding: "10px 16px", textAlign: "center" }}>
+          <div style={{ fontSize: 28, fontWeight: 800, color: "#842029" }}>{client.attempted_engagements}</div>
+          <div style={{ fontSize: 11, color: "#842029", opacity: 0.8 }}>Attempted Engagements</div>
+        </div>
+        <div style={{ flex: 1, minWidth: 120, background: "#fffdf0", border: "1px solid #f0d080", borderRadius: 8, padding: "10px 16px", textAlign: "center" }}>
+          <div style={{ fontSize: 28, fontWeight: 800, color: "#856404" }}>{client.appointment_reminders}</div>
+          <div style={{ fontSize: 11, color: "#856404", opacity: 0.8 }}>Appointment Reminders</div>
+        </div>
+        {client.days_since_real_service != null && (
+          <div style={{ flex: 1, minWidth: 120, background: client.days_since_real_service > 21 ? "#fff5f5" : "var(--color-surface-alt)", border: `1px solid ${client.days_since_real_service > 21 ? "#f5c6cb" : "var(--color-border)"}`, borderRadius: 8, padding: "10px 16px", textAlign: "center" }}>
+            <div style={{ fontSize: 28, fontWeight: 800, color: client.days_since_real_service > 21 ? "#842029" : "inherit" }}>{client.days_since_real_service}d</div>
+            <div style={{ fontSize: 11, color: "var(--color-muted)", opacity: 0.8 }}>Since Last Real Svc</div>
+          </div>
+        )}
+      </div>
+
+      {/* Service history */}
+      <div style={{ border: "1px solid var(--color-border)", borderRadius: 8, overflow: "hidden" }}>
+        <div style={{ background: "var(--color-surface-alt)", padding: "8px 14px", fontWeight: 700, fontSize: 12, letterSpacing: "0.05em", textTransform: "uppercase", color: "var(--color-brand-dark)", borderBottom: "1px solid var(--color-border)" }}>
+          Service History ({sortedServices.length})
+        </div>
+        {sortedServices.length === 0 ? (
+          <p style={{ padding: "12px 14px", color: "var(--color-muted)", fontSize: 13 }}>No dated service events on record.</p>
+        ) : (
+          <div style={{ padding: "8px 14px" }}>
+            {sortedServices.map((s, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "5px 0", borderBottom: i < sortedServices.length - 1 ? "1px solid var(--color-border)" : "none", fontSize: 13 }}>
+                <span style={{ fontFamily: "monospace", fontSize: 11, color: "var(--color-muted)", flexShrink: 0, minWidth: 88 }}>{s.attendance_date}</span>
+                <CategoryBadge cat={s.category} />
+                <span>{s.service_item}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

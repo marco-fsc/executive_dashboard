@@ -502,8 +502,18 @@ export function clientList(
       flags,
       destination: row["Destination Category"] ?? "",
       exit_date: row["Project Exit Date"] ?? "",
+      enrollment_date: row["Project Start Date"] ?? "",
       cash_income: row["Cash Income Amount"] ?? null,
       general_health: row["General Health Status"] ?? "",
+      mental_health: row["Mental Health"] ?? "",
+      chronic_health: row["Chronic Health"] ?? "",
+      developmental: row.Developmental ?? "",
+      physical: row.Physical ?? "",
+      substance_use: row["Substance Use Disorder"] ?? "",
+      medicare: row.Medicare ?? "",
+      hours_worked_last_week: row["Hours Worked Last Week"] ?? "",
+      employment_seeking: row["Employment Seeking"] ?? "",
+      employment_tenure: row["Employment Tenure"] ?? "",
     };
   });
 
