@@ -18,7 +18,10 @@ export async function POST(request: Request) {
 
   // Phase 2: browser notifies us the upload is done — just ack it.
   if (body.type === "blob.upload-completed") {
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({
+      type: "blob.upload-completed",
+      response: "ok",
+    });
   }
 
   // Phase 1: generate a client token (auth required).
