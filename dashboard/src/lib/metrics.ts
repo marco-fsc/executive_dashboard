@@ -3,6 +3,8 @@ import type { Dataset, Enrollment, ServiceEvent } from "@/lib/dataset";
 export const CAN_IDENTIFIER = "CAN Team Outreach";
 const APPOINTMENT_REMINDER_ITEM = "Appointment Reminders";
 const ATTEMPTED_ENGAGEMENT_ITEM = "Attempted Engagement";
+const EMERGENCY_SHELTER_DEST_RE = /emergency shelter|hotel or motel/i;
+const NEGATIVE_OUTCOME_DEST_RE = /place not meant for habitation|not meant for habitation|death|deceased|jail|prison/i;
 
 export const PROGRAM_ORDER = [
   "North A",
@@ -173,6 +175,66 @@ export function canKpis(ds: Dataset, months?: number | null) {
     positive_pct: pct(positive, totalExits),
     perm_housing: perm,
     shelter_connected: shelterConnected,
+  };
+}
+
+export interface ExecutiveOutcomeKpis {
+  shelter_placements: number;
+  housed_on_exit: number;
+  total_positive_outcomes: number;
+  total_exit_clients: number;
+  housed_on_exit_pct: number;
+  total_positive_outcome_pct: number;
+}
+
+/**
+ * Executive outcome hero-card metrics (unique clients):
+ * - shelter_placements: exited to Emergency Shelter (incl. hotel/motel)
+ * - housed_on_exit: exited to Permanent Housing Situations
+ * - total_positive_outcomes: all exited clients except destinations indicating
+ *   place not meant for habitation, death, or jail/prison
+ */
+export function executiveOutcomeKpis(ds: Dataset, program?: string | null, months?: number | null): ExecutiveOutcomeKpis {
+  let rows = ds.enrollments;
+  if (program) rows = rows.filter((e) => e.Name === program);
+
+  const exitedAll = rows.filter((e) => String(e["Active in Project"]) === "No");
+  const exited = months
+    ? exitedAll.filter((e) => withinDateWindow(e["Project Exit Date"], months))
+    : exitedAll;
+
+  const allExitedClients = new Set<string>();
+  const shelterPlacementClients = new Set<string>();
+  const housedOnExitClients = new Set<string>();
+  const positiveOutcomeClients = new Set<string>();
+
+  for (const e of exited) {
+    allExitedClients.add(e.uid);
+    const destination = String(e.Destination ?? "");
+    const destinationCategory = String(e["Destination Category"] ?? "");
+
+    if (EMERGENCY_SHELTER_DEST_RE.test(destination)) {
+      shelterPlacementClients.add(e.uid);
+    }
+
+    if (destinationCategory === "Permanent Housing Situations") {
+      housedOnExitClients.add(e.uid);
+    }
+
+    if (!NEGATIVE_OUTCOME_DEST_RE.test(destination)) {
+      positiveOutcomeClients.add(e.uid);
+    }
+  }
+
+  const totalExitClients = allExitedClients.size;
+
+  return {
+    shelter_placements: shelterPlacementClients.size,
+    housed_on_exit: housedOnExitClients.size,
+    total_positive_outcomes: positiveOutcomeClients.size,
+    total_exit_clients: totalExitClients,
+    housed_on_exit_pct: pct(housedOnExitClients.size, totalExitClients),
+    total_positive_outcome_pct: pct(positiveOutcomeClients.size, totalExitClients),
   };
 }
 

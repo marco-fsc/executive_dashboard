@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { TopNav } from "@/app/_components/TopNav";
 import { SignOutButton } from "@/app/_components/AuthButtons";
 import { readCurrentDataset } from "@/lib/blob-dataset-store";
-import { canKpis, executiveKpis, programList, programSummary, serviceCounts } from "@/lib/metrics";
+import { executiveKpis, executiveOutcomeKpis, programList, programSummary, serviceCounts } from "@/lib/metrics";
 import { readAcl, resolveRole, PAGE_ROLES } from "@/lib/acl";
 import { ProgramSummaryTable } from "./ProgramSummaryTable";
 
@@ -109,7 +109,7 @@ export default async function DashboardPage({
 
             {(() => {
               const kpis = executiveKpis(ds, program || null, months);
-              const can = canKpis(ds, months);
+              const outcomes = executiveOutcomeKpis(ds, program || null, months);
               const programs = programSummary(ds, program || null, months);
               const svc = serviceCounts(ds, { months, program: program || null });
 
@@ -119,13 +119,13 @@ export default async function DashboardPage({
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 16, marginTop: 16 }}>
                     <div className="card" style={{ textAlign: "center", padding: "28px 20px" }}>
                       <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--color-muted, #666)", marginBottom: 8 }}>
-                        Clients Navigated into Shelter
+                        Shelter Placements
                       </div>
                       <div style={{ fontSize: 64, fontWeight: 800, lineHeight: 1, color: "#1a7f4e" }}>
-                        {kpis.temp_housing_exits}
+                        {outcomes.shelter_placements}
                       </div>
                       <div style={{ fontSize: 12, color: "var(--color-muted, #666)", marginTop: 8 }}>
-                        Temporary housing exits · shelter programs
+                        Unique exited clients to Emergency Shelter (incl. hotel/motel)
                       </div>
                     </div>
 
@@ -134,22 +134,22 @@ export default async function DashboardPage({
                         Clients Housed on Exit
                       </div>
                       <div style={{ fontSize: 64, fontWeight: 800, lineHeight: 1, color: "#1a7f4e" }}>
-                        {kpis.perm_housing_exits}
+                        {outcomes.housed_on_exit}
                       </div>
                       <div style={{ fontSize: 12, color: "var(--color-muted, #666)", marginTop: 8 }}>
-                        Permanent housing exits · shelter programs
+                        {outcomes.housed_on_exit_pct}% of exited clients · selected period
                       </div>
                     </div>
 
                     <div className="card" style={{ textAlign: "center", padding: "28px 20px" }}>
                       <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--color-muted, #666)", marginBottom: 8 }}>
-                        CAN Positive Outcomes
+                        Total Positive Outcomes
                       </div>
                       <div style={{ fontSize: 64, fontWeight: 800, lineHeight: 1, color: "#1a7f4e" }}>
-                        {can.positive_exits}
+                        {outcomes.total_positive_outcomes}
                       </div>
                       <div style={{ fontSize: 12, color: "var(--color-muted, #666)", marginTop: 8 }}>
-                        {can.positive_pct}% of CAN exits · selected period
+                        {outcomes.total_positive_outcome_pct}% of exited clients · selected period
                       </div>
                     </div>
                   </div>
@@ -169,8 +169,8 @@ export default async function DashboardPage({
                       <div className="kpi-value">{kpis.no_recent_contact}</div>
                     </div>
                     <div className="kpi-card highlight">
-                      <div className="kpi-label">CAN positive outcomes</div>
-                      <div className="kpi-value">{can.positive_exits} <span style={{ fontSize: 18, fontWeight: 400 }}>({can.positive_pct}%)</span></div>
+                      <div className="kpi-label">Total positive outcomes</div>
+                      <div className="kpi-value">{outcomes.total_positive_outcomes} <span style={{ fontSize: 18, fontWeight: 400 }}>({outcomes.total_positive_outcome_pct}%)</span></div>
                     </div>
                   </div>
 
