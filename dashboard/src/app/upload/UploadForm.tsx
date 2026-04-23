@@ -55,26 +55,31 @@ export default function UploadForm() {
       setPhase("uploading");
       setProgress(0);
 
-      const totalSize = file.size;
-      let cumulativeBytes = 0;
-      let prevChunkLoaded = 0;
+      // Avoid endless waiting if the finalization handshake gets stuck.
+      const uploadAbortController = new AbortController();
+      const uploadTimeout = window.setTimeout(() => {
+        uploadAbortController.abort();
+      }, 4 * 60 * 1000);
 
-      const blob = await upload(
-        `csv-uploads/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`,
-        file,
-        {
-          access: "public",
-          handleUploadUrl: "/api/data/upload-handle",
-          onUploadProgress: ({ loaded }) => {
-            if (loaded < prevChunkLoaded) cumulativeBytes += prevChunkLoaded;
-            prevChunkLoaded = loaded;
-            const pct = totalSize > 0
-              ? Math.min(99, Math.round(((cumulativeBytes + loaded) / totalSize) * 100))
-              : 0;
-            setProgress(pct);
-          },
-        }
-      );
+      let blob;
+      try {
+        blob = await upload(
+          `csv-uploads/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`,
+          file,
+          {
+            access: "public",
+            handleUploadUrl: "/api/data/upload-handle",
+            multipart: true,
+            abortSignal: uploadAbortController.signal,
+            onUploadProgress: ({ percentage }) => {
+              // Keep 100% reserved for the server-side processing phase.
+              setProgress(Math.min(99, Math.round(percentage)));
+            },
+          }
+        );
+      } finally {
+        window.clearTimeout(uploadTimeout);
+      }
 
       // Step 2: server ingests from Blob URL
       setPhase("processing");
@@ -101,7 +106,11 @@ export default function UploadForm() {
       form.reset();
       setFileStatus({ kind: "none" });
     } catch (err: unknown) {
-      setMessage({ text: `Upload failed: ${err instanceof Error ? err.message : "Unknown error"}`, ok: false });
+      const detail = err instanceof Error ? err.message : "Unknown error";
+      const timeoutHint = /abort|aborted/i.test(detail)
+        ? " Upload timed out while finalizing. Please retry once; if it repeats, contact support with the upload timestamp."
+        : "";
+      setMessage({ text: `Upload failed: ${detail}${timeoutHint}`, ok: false });
       setPhase("error");
     }
   }
@@ -149,7 +158,11 @@ export default function UploadForm() {
         )}
         {busy && (
           <div style={{ fontSize: 12, color: "var(--color-muted)", textAlign: "center" }}>
-            {phase === "uploading" ? `Uploading file... ${progress}%` : "Processing data - please wait..."}
+            {phase === "uploading"
+              ? progress >= 99
+                ? "Finalizing upload..."
+                : `Uploading file... ${progress}%`
+              : "Processing data - please wait..."}
           </div>
         )}
 
