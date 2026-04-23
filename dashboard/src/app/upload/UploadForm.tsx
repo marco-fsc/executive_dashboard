@@ -49,41 +49,32 @@ export default function UploadForm() {
     if (!file) { setMessage({ text: "Select a CSV file.", ok: false }); return; }
 
     try {
-      // Step 1: get a short-lived client token from our server (no webhook)
+      // Step 1: upload directly from browser → Vercel Blob.
+      // upload-handle returns 200 immediately for blob.upload-completed
+      // so upload() resolves as soon as bytes reach Blob (no hang at 99%).
       setPhase("uploading");
       setProgress(0);
 
-      const tokenRes = await fetch(
-        `/api/data/upload-handle?filename=${encodeURIComponent(file.name)}`
-      );
-      if (!tokenRes.ok) {
-        const err = await tokenRes.text();
-        throw new Error(`Could not get upload token: ${err.slice(0, 120)}`);
-      }
-      const { clientToken, pathname } = (await tokenRes.json()) as {
-        clientToken: string;
-        pathname: string;
-      };
-
-      // Step 2: upload directly from browser → Vercel Blob using the token.
-      // Using clientToken skips the handleUpload webhook phase entirely,
-      // so the upload() promise resolves as soon as the file reaches Blob.
       const totalSize = file.size;
       let cumulativeBytes = 0;
       let prevChunkLoaded = 0;
 
-      const blob = await upload(pathname, file, {
-        access: "public",
-        clientToken,
-        onUploadProgress: ({ loaded }) => {
-          if (loaded < prevChunkLoaded) cumulativeBytes += prevChunkLoaded;
-          prevChunkLoaded = loaded;
-          const pct = totalSize > 0
-            ? Math.min(99, Math.round(((cumulativeBytes + loaded) / totalSize) * 100))
-            : 0;
-          setProgress(pct);
-        },
-      });
+      const blob = await upload(
+        `csv-uploads/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`,
+        file,
+        {
+          access: "public",
+          handleUploadUrl: "/api/data/upload-handle",
+          onUploadProgress: ({ loaded }) => {
+            if (loaded < prevChunkLoaded) cumulativeBytes += prevChunkLoaded;
+            prevChunkLoaded = loaded;
+            const pct = totalSize > 0
+              ? Math.min(99, Math.round(((cumulativeBytes + loaded) / totalSize) * 100))
+              : 0;
+            setProgress(pct);
+          },
+        }
+      );
 
       // Step 2: server ingests from Blob URL
       setPhase("processing");
