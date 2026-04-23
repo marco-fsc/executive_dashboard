@@ -124,9 +124,6 @@ export default async function DashboardPage({
                       <div style={{ fontSize: 64, fontWeight: 800, lineHeight: 1, color: "#1a7f4e" }}>
                         {outcomes.shelter_placements}
                       </div>
-                      <div style={{ fontSize: 12, color: "var(--color-muted, #666)", marginTop: 8 }}>
-                        Unique exited clients to Emergency Shelter (incl. hotel/motel)
-                      </div>
                     </div>
 
                     <div className="card" style={{ textAlign: "center", padding: "28px 20px" }}>
@@ -136,9 +133,6 @@ export default async function DashboardPage({
                       <div style={{ fontSize: 64, fontWeight: 800, lineHeight: 1, color: "#1a7f4e" }}>
                         {outcomes.housed_on_exit}
                       </div>
-                      <div style={{ fontSize: 12, color: "var(--color-muted, #666)", marginTop: 8 }}>
-                        {outcomes.housed_on_exit_pct}% of exited clients · selected period
-                      </div>
                     </div>
 
                     <div className="card" style={{ textAlign: "center", padding: "28px 20px" }}>
@@ -147,9 +141,6 @@ export default async function DashboardPage({
                       </div>
                       <div style={{ fontSize: 64, fontWeight: 800, lineHeight: 1, color: "#1a7f4e" }}>
                         {outcomes.total_positive_outcomes}
-                      </div>
-                      <div style={{ fontSize: 12, color: "var(--color-muted, #666)", marginTop: 8 }}>
-                        {outcomes.total_positive_outcome_pct}% of exited clients · selected period
                       </div>
                     </div>
                   </div>
