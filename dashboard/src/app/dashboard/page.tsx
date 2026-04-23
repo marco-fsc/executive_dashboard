@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { TopNav } from "@/app/_components/TopNav";
 import { SignOutButton } from "@/app/_components/AuthButtons";
 import { readCurrentDataset } from "@/lib/blob-dataset-store";
-import { executiveKpis, executiveOutcomeKpis, programList, programSummary, serviceCounts } from "@/lib/metrics";
+import { canKpis, executiveKpis, executiveOutcomeKpis, programList, programSummary, serviceCounts } from "@/lib/metrics";
 import { readAcl, resolveRole, PAGE_ROLES } from "@/lib/acl";
 import { ProgramSummaryTable } from "./ProgramSummaryTable";
 
@@ -110,6 +110,7 @@ export default async function DashboardPage({
             {(() => {
               const kpis = executiveKpis(ds, program || null, months);
               const outcomes = executiveOutcomeKpis(ds, program || null, months);
+              const can = canKpis(ds, months);
               const programs = programSummary(ds, program || null, months);
               const svc = serviceCounts(ds, { months, program: program || null });
 
@@ -153,15 +154,15 @@ export default async function DashboardPage({
                     <div className="kpi-card highlight">
                       <div className="kpi-label">Perm housing exit rate</div>
                       <div className="kpi-value">{kpis.perm_housing_pct}%</div>
-                      <div className="kpi-sub">{kpis.perm_housing_exits} of {kpis.total_exits} exits</div>
                     </div>
                     <div className="kpi-card">
                       <div className="kpi-label">No recent contact (&gt;21d)</div>
                       <div className="kpi-value">{kpis.no_recent_contact}</div>
                     </div>
                     <div className="kpi-card highlight">
-                      <div className="kpi-label">Total positive outcomes</div>
-                      <div className="kpi-value">{outcomes.total_positive_outcomes} <span style={{ fontSize: 18, fontWeight: 400 }}>({outcomes.total_positive_outcome_pct}%)</span></div>
+                      <div className="kpi-label">CAN positive outcomes</div>
+                      <div className="kpi-value">{can.positive_pct}%</div>
+                      <div className="kpi-sub">{can.positive_exits} of {can.total_exits} exits (perm + temp + shelter + other)</div>
                     </div>
                   </div>
 
