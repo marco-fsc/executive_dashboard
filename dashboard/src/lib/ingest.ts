@@ -138,6 +138,7 @@ type SvcAgg = {
         uid: uidHash,
         Name: program,
         "Project Start Date": start,
+        "Enrollment Exit Date": toISODate(raw["Enrollment Exit Date"]) || undefined,
         "Project Exit Date": toISODate(raw["Project Exit Date"]) || undefined,
         "Active in Project": String(raw["Active in Project"] ?? ""),
         "Assigned Staff": String(raw["Assigned Staff"] ?? "") || undefined,

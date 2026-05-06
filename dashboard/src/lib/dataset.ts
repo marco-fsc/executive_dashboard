@@ -4,6 +4,7 @@ export interface Enrollment {
   uid: string;
   Name: string; // Program name
   "Project Start Date": ISODateString;
+  "Enrollment Exit Date"?: ISODateString;
   "Project Exit Date"?: ISODateString;
   "Active in Project": "Yes" | "No" | string;
   "Assigned Staff"?: string;

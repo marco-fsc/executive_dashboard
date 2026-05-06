@@ -3,20 +3,15 @@ import { redirect } from "next/navigation";
 import { TopNav } from "@/app/_components/TopNav";
 import { SignOutButton } from "@/app/_components/AuthButtons";
 import { readCurrentDataset } from "@/lib/blob-dataset-store";
+import { resolveExecutiveDateFilter } from "@/lib/date-filter";
 import { canKpis, executiveKpis, executiveOutcomeKpis, programList, programSummary, serviceCounts } from "@/lib/metrics";
 import { readAcl, resolveRole, PAGE_ROLES } from "@/lib/acl";
 import { ProgramSummaryTable } from "./ProgramSummaryTable";
 
-function monthsFromRange(range: string | undefined): number {
-  if (range === "1") return 1;
-  if (range === "18") return 18;
-  return 6;
-}
-
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams?: Promise<{ program?: string; range?: string }>;
+  searchParams?: Promise<{ program?: string; range?: string; dateMode?: string; startDate?: string; endDate?: string }>;
 }) {
   const session = await auth();
   if (!session) {
@@ -38,10 +33,22 @@ export default async function DashboardPage({
     isLockedRole && userRole.program
       ? userRole.program
       : rawProgram;
-  const range = sp?.range ?? "6";
-  const months = monthsFromRange(range);
+  const dateFilter = resolveExecutiveDateFilter({
+    dateMode: sp?.dateMode,
+    range: sp?.range,
+    startDate: sp?.startDate,
+    endDate: sp?.endDate,
+  });
+  const range = dateFilter.range;
 
   const ds = await readCurrentDataset();
+  const exportDateParams = new URLSearchParams({
+    range,
+    dateMode: dateFilter.dateMode,
+  });
+  if (dateFilter.startDate) exportDateParams.set("startDate", dateFilter.startDate);
+  if (dateFilter.endDate) exportDateParams.set("endDate", dateFilter.endDate);
+  const exportDateQuery = exportDateParams.toString();
 
   return (
     <>
@@ -61,12 +68,12 @@ export default async function DashboardPage({
               </div>
               <div style={{ display: "flex", gap: 12 }}>
                 <a
-                  href={`/api/export?format=excel&report=executive&range=${encodeURIComponent(range)}${program ? `&program=${encodeURIComponent(program)}` : ""}`}
+                  href={`/api/export?format=excel&report=executive&${exportDateQuery}${program ? `&program=${encodeURIComponent(program)}` : ""}`}
                 >
                   Export Excel
                 </a>
                 <a
-                  href={`/api/export?format=pdf&report=executive&range=${encodeURIComponent(range)}${program ? `&program=${encodeURIComponent(program)}` : ""}`}
+                  href={`/api/export?format=pdf&report=executive&${exportDateQuery}${program ? `&program=${encodeURIComponent(program)}` : ""}`}
                 >
                   Export PDF
                 </a>
@@ -95,7 +102,15 @@ export default async function DashboardPage({
               )}
 
               <label>
-                Date range
+                Filter mode
+                <select name="dateMode" defaultValue={dateFilter.dateMode} style={{ display: "block", marginTop: 6 }}>
+                  <option value="preset">Preset months</option>
+                  <option value="custom">Custom date range</option>
+                </select>
+              </label>
+
+              <label>
+                Preset
                 <select name="range" defaultValue={range} style={{ display: "block", marginTop: 6 }}>
                   <option value="1">Last month</option>
                   <option value="6">Last 6 months</option>
@@ -103,16 +118,26 @@ export default async function DashboardPage({
                 </select>
               </label>
 
+              <label>
+                Start date
+                <input type="date" name="startDate" defaultValue={dateFilter.startDate ?? ""} style={{ display: "block", marginTop: 6 }} />
+              </label>
+
+              <label>
+                End date
+                <input type="date" name="endDate" defaultValue={dateFilter.endDate ?? ""} style={{ display: "block", marginTop: 6 }} />
+              </label>
+
               <button type="submit">Apply</button>
-              {(program || range !== "6") ? <a href="/dashboard" style={{ marginLeft: "auto" }}>Reset</a> : <span style={{ marginLeft: "auto" }} />}
+              {(program || range !== "6" || dateFilter.dateMode !== "preset" || dateFilter.startDate || dateFilter.endDate) ? <a href="/dashboard" style={{ marginLeft: "auto" }}>Reset</a> : <span style={{ marginLeft: "auto" }} />}
             </form>
 
             {(() => {
-              const kpis = executiveKpis(ds, program || null, months);
-              const outcomes = executiveOutcomeKpis(ds, program || null, months);
-              const can = canKpis(ds, months);
-              const programs = programSummary(ds, program || null, months);
-              const svc = serviceCounts(ds, { months, program: program || null });
+              const kpis = executiveKpis(ds, program || null, dateFilter);
+              const outcomes = executiveOutcomeKpis(ds, program || null, dateFilter);
+              const can = canKpis(ds, dateFilter);
+              const programs = programSummary(ds, program || null, dateFilter);
+              const svc = serviceCounts(ds, { dateFilter, program: program || null });
 
               return (
                 <>

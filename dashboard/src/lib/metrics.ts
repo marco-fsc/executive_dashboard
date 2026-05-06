@@ -1,4 +1,5 @@
 import type { Dataset, Enrollment, ServiceEvent } from "@/lib/dataset";
+import type { DateFilterSpec } from "@/lib/date-filter";
 
 export const CAN_IDENTIFIER = "CAN Team Outreach";
 const APPOINTMENT_REMINDER_ITEM = "Appointment Reminders";
@@ -53,12 +54,35 @@ function windowStartForMonths(months: number): Date {
   return d;
 }
 
-function withinDateWindow(exitIso: string | undefined, months: number | null): boolean {
-  if (!exitIso) return false;
-  if (!months) return true;
-  const exit = isoToDate(exitIso);
-  if (!exit) return false;
-  return exit >= windowStartForMonths(months);
+function endOfDay(date: Date): Date {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999);
+}
+
+function withinDateFilter(dateIso: string | undefined, filter?: DateFilterSpec | null): boolean {
+  if (!dateIso) return false;
+  if (!filter) return true;
+
+  const value = isoToDate(dateIso);
+  if (!value) return false;
+
+  if (filter.startDate) {
+    const start = isoToDate(filter.startDate);
+    if (!start || value < start) return false;
+  }
+
+  if (filter.endDate) {
+    const end = isoToDate(filter.endDate);
+    if (!end || value > endOfDay(end)) return false;
+  }
+
+  if (filter.startDate || filter.endDate) return true;
+
+  if (!filter.months) return true;
+  return value >= windowStartForMonths(filter.months);
+}
+
+function exitDateForEnrollment(enrollment: Enrollment): string | undefined {
+  return enrollment["Enrollment Exit Date"] ?? enrollment["Project Exit Date"];
 }
 
 export function programList(ds: Dataset): string[] {
@@ -73,7 +97,7 @@ export function cmList(ds: Dataset, program?: string | null): string[] {
   ).sort();
 }
 
-export function executiveKpis(ds: Dataset, program?: string | null, months?: number | null) {
+export function executiveKpis(ds: Dataset, program?: string | null, dateFilter?: DateFilterSpec | null) {
   let rows = ds.enrollments;
   if (program) rows = rows.filter((e) => e.Name === program);
 
@@ -82,7 +106,7 @@ export function executiveKpis(ds: Dataset, program?: string | null, months?: num
 
   const active = rows.filter((e) => String(e["Active in Project"]) === "Yes");
   const exitedAll = rows.filter((e) => String(e["Active in Project"]) === "No");
-  const exited = months ? exitedAll.filter((e) => withinDateWindow(e["Project Exit Date"], months)) : exitedAll;
+  const exited = dateFilter ? exitedAll.filter((e) => withinDateFilter(exitDateForEnrollment(e), dateFilter)) : exitedAll;
 
   const totalActive = active.length;
   const totalExits = exited.length;
@@ -135,11 +159,11 @@ export function executiveKpis(ds: Dataset, program?: string | null, months?: num
   };
 }
 
-export function canKpis(ds: Dataset, months?: number | null) {
+export function canKpis(ds: Dataset, dateFilter?: DateFilterSpec | null) {
   const rows = ds.enrollments.filter((e) => e.Name.toLowerCase().includes(CAN_IDENTIFIER.toLowerCase()));
   const active = rows.filter((e) => String(e["Active in Project"]) === "Yes");
   const exitedAll = rows.filter((e) => String(e["Active in Project"]) === "No");
-  const exited = months ? exitedAll.filter((e) => withinDateWindow(e["Project Exit Date"], months)) : exitedAll;
+  const exited = dateFilter ? exitedAll.filter((e) => withinDateFilter(exitDateForEnrollment(e), dateFilter)) : exitedAll;
 
   const totalExits = exited.length;
 
@@ -194,13 +218,13 @@ export interface ExecutiveOutcomeKpis {
  * - total_positive_outcomes: all exited clients except destinations indicating
  *   place not meant for habitation, death, or jail/prison
  */
-export function executiveOutcomeKpis(ds: Dataset, program?: string | null, months?: number | null): ExecutiveOutcomeKpis {
+export function executiveOutcomeKpis(ds: Dataset, program?: string | null, dateFilter?: DateFilterSpec | null): ExecutiveOutcomeKpis {
   let rows = ds.enrollments;
   if (program) rows = rows.filter((e) => e.Name === program);
 
   const exitedAll = rows.filter((e) => String(e["Active in Project"]) === "No");
-  const exited = months
-    ? exitedAll.filter((e) => withinDateWindow(e["Project Exit Date"], months))
+  const exited = dateFilter
+    ? exitedAll.filter((e) => withinDateFilter(exitDateForEnrollment(e), dateFilter))
     : exitedAll;
 
   const allExitedClients = new Set<string>();
@@ -262,7 +286,7 @@ export interface ProgramSummaryRow {
   exit_destinations: ExitDestinationBreakdown[];
 }
 
-export function programSummary(ds: Dataset, program?: string | null, months?: number | null): ProgramSummaryRow[] {
+export function programSummary(ds: Dataset, program?: string | null, dateFilter?: DateFilterSpec | null): ProgramSummaryRow[] {
   let rows = ds.enrollments;
   if (program) rows = rows.filter((e) => e.Name === program);
 
@@ -280,7 +304,7 @@ export function programSummary(ds: Dataset, program?: string | null, months?: nu
     const isCan = progName.toLowerCase().includes(CAN_IDENTIFIER.toLowerCase());
     const active = group.filter((e) => String(e["Active in Project"]) === "Yes");
     const exitedAll = group.filter((e) => String(e["Active in Project"]) === "No");
-    const exited = months ? exitedAll.filter((e) => withinDateWindow(e["Project Exit Date"], months)) : exitedAll;
+    const exited = dateFilter ? exitedAll.filter((e) => withinDateFilter(exitDateForEnrollment(e), dateFilter)) : exitedAll;
 
     const totalExits = exited.length;
 
@@ -567,6 +591,7 @@ export function clientList(
       flags,
       destination: row["Destination Category"] ?? "",
       exit_date: row["Project Exit Date"] ?? "",
+      enrollment_exit_date: row["Enrollment Exit Date"] ?? "",
       enrollment_date: row["Project Start Date"] ?? "",
       cash_income: row["Cash Income Amount"] ?? null,
       general_health: row["General Health Status"] ?? "",
@@ -587,17 +612,13 @@ export function clientList(
 
 export function serviceCounts(
   ds: Dataset,
-  opts: { items?: string[] | null; months?: number | null; program?: string | null }
+  opts: { items?: string[] | null; dateFilter?: DateFilterSpec | null; program?: string | null }
 ) {
   let svc: ServiceEvent[] = ds.services;
   if (opts.program) svc = svc.filter((s) => s.Name === opts.program);
 
-  if (opts.months) {
-    const start = windowStartForMonths(opts.months);
-    svc = svc.filter((s) => {
-      const d = isoToDate(s["Service Attendance Date"]);
-      return d ? d >= start : false;
-    });
+  if (opts.dateFilter) {
+    svc = svc.filter((s) => withinDateFilter(s["Service Attendance Date"], opts.dateFilter));
   }
 
   const items = opts.items && opts.items.length ? opts.items : [...DEFAULT_SERVICE_ITEMS];

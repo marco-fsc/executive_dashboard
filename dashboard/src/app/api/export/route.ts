@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { readCurrentDataset } from "@/lib/blob-dataset-store";
+import { resolveExecutiveDateFilter } from "@/lib/date-filter";
 import { canKpis, clientList, cmSummary, executiveKpis, programList, programSummary, serviceCounts } from "@/lib/metrics";
 import ExcelJS from "exceljs";
 import { PDFDocument, StandardFonts } from "pdf-lib";
@@ -9,12 +10,6 @@ export const runtime = "nodejs";
 
 function qp(url: string) {
   return new URL(url).searchParams;
-}
-
-function monthsFromRange(range: string | null): number {
-  if (range === "1") return 1;
-  if (range === "18") return 18;
-  return 6;
 }
 
 export async function GET(req: Request) {
@@ -33,17 +28,23 @@ export async function GET(req: Request) {
   }
 
   const program = params.get("program");
-  const range = params.get("range");
-  const months = report === "executive" ? monthsFromRange(range) : null;
+  const dateFilter = report === "executive"
+    ? resolveExecutiveDateFilter({
+        dateMode: params.get("dateMode"),
+        range: params.get("range"),
+        startDate: params.get("startDate"),
+        endDate: params.get("endDate"),
+      })
+    : null;
 
   if (format === "excel") {
     const wb = new ExcelJS.Workbook();
 
     if (report === "executive") {
-      const kpis = executiveKpis(ds, program || null, months);
-      const can = canKpis(ds, months);
-      const programs = programSummary(ds, program || null, months);
-      const svc = serviceCounts(ds, { months, program: program || null });
+      const kpis = executiveKpis(ds, program || null, dateFilter);
+      const can = canKpis(ds, dateFilter);
+      const programs = programSummary(ds, program || null, dateFilter);
+      const svc = serviceCounts(ds, { dateFilter, program: program || null });
 
       const s1 = wb.addWorksheet("KPIs");
       s1.addRow(["metric", "value"]);
@@ -149,7 +150,7 @@ export async function GET(req: Request) {
     page.drawText(dsMeta, { x: 50, y: 715, size: 10, font });
 
     if (report === "executive") {
-      const kpis = executiveKpis(ds, program || null, months);
+      const kpis = executiveKpis(ds, program || null, dateFilter);
       let y = 680;
       for (const [k, v] of Object.entries(kpis)) {
         page.drawText(`${k}: ${v}`, { x: 50, y, size: 10, font });
