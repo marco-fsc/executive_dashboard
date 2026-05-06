@@ -11,7 +11,7 @@ import { ProgramSummaryTable } from "./ProgramSummaryTable";
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams?: Promise<{ program?: string; range?: string; dateMode?: string; startDate?: string; endDate?: string }>;
+  searchParams?: Promise<{ program?: string; startDate?: string; endDate?: string }>;
 }) {
   const session = await auth();
   if (!session) {
@@ -34,18 +34,12 @@ export default async function DashboardPage({
       ? userRole.program
       : rawProgram;
   const dateFilter = resolveExecutiveDateFilter({
-    dateMode: sp?.dateMode,
-    range: sp?.range,
     startDate: sp?.startDate,
     endDate: sp?.endDate,
   });
-  const range = dateFilter.range;
 
   const ds = await readCurrentDataset();
-  const exportDateParams = new URLSearchParams({
-    range,
-    dateMode: dateFilter.dateMode,
-  });
+  const exportDateParams = new URLSearchParams();
   if (dateFilter.startDate) exportDateParams.set("startDate", dateFilter.startDate);
   if (dateFilter.endDate) exportDateParams.set("endDate", dateFilter.endDate);
   const exportDateQuery = exportDateParams.toString();
@@ -68,12 +62,12 @@ export default async function DashboardPage({
               </div>
               <div style={{ display: "flex", gap: 12 }}>
                 <a
-                  href={`/api/export?format=excel&report=executive&${exportDateQuery}${program ? `&program=${encodeURIComponent(program)}` : ""}`}
+                  href={`/api/export?format=excel&report=executive${exportDateQuery ? `&${exportDateQuery}` : ""}${program ? `&program=${encodeURIComponent(program)}` : ""}`}
                 >
                   Export Excel
                 </a>
                 <a
-                  href={`/api/export?format=pdf&report=executive&${exportDateQuery}${program ? `&program=${encodeURIComponent(program)}` : ""}`}
+                  href={`/api/export?format=pdf&report=executive${exportDateQuery ? `&${exportDateQuery}` : ""}${program ? `&program=${encodeURIComponent(program)}` : ""}`}
                 >
                   Export PDF
                 </a>
@@ -102,23 +96,6 @@ export default async function DashboardPage({
               )}
 
               <label>
-                Filter mode
-                <select name="dateMode" defaultValue={dateFilter.dateMode} style={{ display: "block", marginTop: 6 }}>
-                  <option value="preset">Preset months</option>
-                  <option value="custom">Custom date range</option>
-                </select>
-              </label>
-
-              <label>
-                Preset
-                <select name="range" defaultValue={range} style={{ display: "block", marginTop: 6 }}>
-                  <option value="1">Last month</option>
-                  <option value="6">Last 6 months</option>
-                  <option value="18">Last 18 months</option>
-                </select>
-              </label>
-
-              <label>
                 Start date
                 <input type="date" name="startDate" defaultValue={dateFilter.startDate ?? ""} style={{ display: "block", marginTop: 6 }} />
               </label>
@@ -129,7 +106,7 @@ export default async function DashboardPage({
               </label>
 
               <button type="submit">Apply</button>
-              {(program || range !== "6" || dateFilter.dateMode !== "preset" || dateFilter.startDate || dateFilter.endDate) ? <a href="/dashboard" style={{ marginLeft: "auto" }}>Reset</a> : <span style={{ marginLeft: "auto" }} />}
+              {(program || dateFilter.startDate || dateFilter.endDate) ? <a href="/dashboard" style={{ marginLeft: "auto" }}>Reset</a> : <span style={{ marginLeft: "auto" }} />}
             </form>
 
             {(() => {

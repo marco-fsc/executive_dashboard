@@ -30,8 +30,6 @@ export async function GET(req: Request) {
   const program = params.get("program");
   const dateFilter = report === "executive"
     ? resolveExecutiveDateFilter({
-        dateMode: params.get("dateMode"),
-        range: params.get("range"),
         startDate: params.get("startDate"),
         endDate: params.get("endDate"),
       })

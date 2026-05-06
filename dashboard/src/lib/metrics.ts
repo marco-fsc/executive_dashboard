@@ -75,10 +75,7 @@ function withinDateFilter(dateIso: string | undefined, filter?: DateFilterSpec |
     if (!end || value > endOfDay(end)) return false;
   }
 
-  if (filter.startDate || filter.endDate) return true;
-
-  if (!filter.months) return true;
-  return value >= windowStartForMonths(filter.months);
+  return true;
 }
 
 function exitDateForEnrollment(enrollment: Enrollment): string | undefined {
