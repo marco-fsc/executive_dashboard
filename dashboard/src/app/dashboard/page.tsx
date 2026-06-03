@@ -152,11 +152,6 @@ export default async function DashboardPage({
                       <div className="kpi-label">No recent contact (&gt;21d)</div>
                       <div className="kpi-value">{kpis.no_recent_contact}</div>
                     </div>
-                    <div className="kpi-card highlight">
-                      <div className="kpi-label">Positive outcomes</div>
-                      <div className="kpi-value">{outcomes.total_positive_outcome_pct}%</div>
-                      <div className="kpi-sub">{outcomes.total_positive_outcomes} of {outcomes.total_exit_clients} exits</div>
-                    </div>
                   </div>
 
                   <div className="card" style={{ overflowX: "auto" }}>
