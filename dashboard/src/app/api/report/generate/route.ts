@@ -67,9 +67,9 @@ export async function GET(request: NextRequest) {
 
       await browser.close();
 
-      // Return PDF
+      // Return PDF - Convert Uint8Array to Buffer
       const filename = `FSC_Report_${new Date().toISOString().split("T")[0]}.pdf`;
-      return new NextResponse(pdf, {
+      return new NextResponse(Buffer.from(pdf), {
         status: 200,
         headers: {
           "Content-Type": "application/pdf",
