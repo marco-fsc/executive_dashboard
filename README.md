@@ -123,7 +123,26 @@ The report generator uses:
 - **API endpoint** (`/api/report/generate`) that converts the preview HTML to PDF
 - **Print-optimized CSS** with page breaks, hidden navigation, and clean borders
 
+**Important:** PDF generation runs entirely **on Vercel's servers** using a headless Chrome browser. Your local browser (Edge, Chrome, etc.) is not involved. The process is:
+1. User clicks "Generate PDF" in their browser
+2. Request sent to `/api/report/generate` on Vercel
+3. Vercel launches headless Chrome, renders the preview page server-side
+4. PDF is generated and sent back to the browser as a download
+5. No local browser dependencies required
+
 Reports reuse existing metric calculations and component structures, ensuring consistency with the live dashboard.
+
+### Troubleshooting PDF Generation on Vercel
+
+If PDF generation fails with chromium library errors:
+
+1. **Verify function configuration**: Check that `vercel.json` is deployed with memory allocation (3008 MB minimum)
+2. **Check logs**: View function logs in Vercel dashboard for detailed error messages
+3. **First generation timeout**: Cold starts may take 20-30 seconds; subsequent requests are faster
+4. **Memory issues**: If "out of memory" errors occur, increase `memory` value in `vercel.json`
+5. **NEXTAUTH_URL**: Ensure this environment variable is set correctly in Vercel (should be your production URL)
+
+The `@sparticuz/chromium` package is optimized for Vercel's serverless environment and includes all necessary system libraries.
 
 ---
 
