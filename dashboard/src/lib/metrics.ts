@@ -287,9 +287,6 @@ export function programSummary(ds: Dataset, program?: string | null, dateFilter?
   let rows = ds.enrollments;
   if (program) rows = rows.filter((e) => e.Name === program);
 
-  const exclude = /jail|prison|hospital/i;
-  const shelter = /Emergency shelter|Safe Haven/i;
-
   const byProg = new Map<string, Enrollment[]>();
   for (const e of rows) {
     byProg.set(e.Name, [...(byProg.get(e.Name) ?? []), e]);
@@ -298,7 +295,6 @@ export function programSummary(ds: Dataset, program?: string | null, dateFilter?
   const out: ProgramSummaryRow[] = [];
 
   for (const [progName, group] of byProg.entries()) {
-    const isCan = progName.toLowerCase().includes(CAN_IDENTIFIER.toLowerCase());
     const active = group.filter((e) => String(e["Active in Project"]) === "Yes");
     const exitedAll = group.filter((e) => String(e["Active in Project"]) === "No");
     const exited = dateFilter ? exitedAll.filter((e) => withinDateFilter(exitDateForEnrollment(e), dateFilter)) : exitedAll;
@@ -315,16 +311,9 @@ export function programSummary(ds: Dataset, program?: string | null, dateFilter?
     for (const e of exited) {
       const cat = e["Destination Category"] ?? "Unknown";
       const dest = String(e.Destination ?? "Unknown");
-      const institutionalGood = cat === "Institutional Situations" && !exclude.test(dest);
-      const basePos =
-        cat === "Permanent Housing Situations" ||
-        cat === "Temporary Housing Situations" ||
-        institutionalGood;
-      const canExtra = isCan && (cat === "Other" || (cat === "Homeless Situations" && shelter.test(dest)));
-
       if (cat === "Permanent Housing Situations") perm += 1;
       if (cat === "Homeless Situations") homeless += 1;
-      if (basePos || canExtra) positive += 1;
+      if (!NEGATIVE_OUTCOME_DEST_RE.test(dest)) positive += 1;
 
       if (!destMap.has(cat)) destMap.set(cat, new Map());
       const catMap = destMap.get(cat)!;
@@ -335,17 +324,11 @@ export function programSummary(ds: Dataset, program?: string | null, dateFilter?
     const exit_destinations: ExitDestinationBreakdown[] = [];
     for (const [cat, dests] of destMap.entries()) {
       for (const [dest, count] of dests.entries()) {
-        const institutionalGood = cat === "Institutional Situations" && !exclude.test(dest);
-        const basePos =
-          cat === "Permanent Housing Situations" ||
-          cat === "Temporary Housing Situations" ||
-          institutionalGood;
-        const canExtra = isCan && (cat === "Other" || (cat === "Homeless Situations" && shelter.test(dest)));
         exit_destinations.push({
           category: cat,
           destination: dest,
           count,
-          is_positive: basePos || canExtra,
+          is_positive: !NEGATIVE_OUTCOME_DEST_RE.test(dest),
           is_permanent: cat === "Permanent Housing Situations",
         });
       }

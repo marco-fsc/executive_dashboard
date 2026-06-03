@@ -105,37 +105,37 @@ export default async function ReportPreviewPage({
             return (
               <>
                 {/* Outcome hero cards */}
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, marginBottom: 24 }}>
-                  <div className="card" style={{ textAlign: "center", padding: "28px 20px" }}>
-                    <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--color-muted, #666)", marginBottom: 8 }}>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, marginBottom: 12 }}>
+                  <div className="card" style={{ textAlign: "center", padding: "14px 16px" }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--color-muted, #666)", marginBottom: 4 }}>
                       Shelter Placements
                     </div>
-                    <div style={{ fontSize: 64, fontWeight: 800, lineHeight: 1, color: "#1a7f4e" }}>
+                    <div style={{ fontSize: 40, fontWeight: 800, lineHeight: 1, color: "#1a7f4e" }}>
                       {outcomes.shelter_placements}
                     </div>
                   </div>
 
-                  <div className="card" style={{ textAlign: "center", padding: "28px 20px" }}>
-                    <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--color-muted, #666)", marginBottom: 8 }}>
+                  <div className="card" style={{ textAlign: "center", padding: "14px 16px" }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--color-muted, #666)", marginBottom: 4 }}>
                       Clients Housed on Exit
                     </div>
-                    <div style={{ fontSize: 64, fontWeight: 800, lineHeight: 1, color: "#1a7f4e" }}>
+                    <div style={{ fontSize: 40, fontWeight: 800, lineHeight: 1, color: "#1a7f4e" }}>
                       {outcomes.housed_on_exit}
                     </div>
                   </div>
 
-                  <div className="card" style={{ textAlign: "center", padding: "28px 20px" }}>
-                    <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--color-muted, #666)", marginBottom: 8 }}>
+                  <div className="card" style={{ textAlign: "center", padding: "14px 16px" }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--color-muted, #666)", marginBottom: 4 }}>
                       Total Positive Outcomes
                     </div>
-                    <div style={{ fontSize: 64, fontWeight: 800, lineHeight: 1, color: "#1a7f4e" }}>
+                    <div style={{ fontSize: 40, fontWeight: 800, lineHeight: 1, color: "#1a7f4e" }}>
                       {outcomes.total_positive_outcomes}
                     </div>
                   </div>
                 </div>
 
                 {/* KPI Grid */}
-                <div className="kpi-grid" style={{ marginBottom: 24 }}>
+                <div className="kpi-grid" style={{ marginBottom: 10 }}>
                   <div className="kpi-card">
                     <div className="kpi-label">Active clients</div>
                     <div className="kpi-value">{kpis.total_active}</div>
@@ -156,7 +156,7 @@ export default async function ReportPreviewPage({
                 </div>
 
                 {/* Program Summary Table */}
-                <div className="card" style={{ overflowX: "auto", marginBottom: 24 }}>
+                <div className="card" style={{ overflowX: "auto", marginBottom: 10 }}>
                   <h2 style={{ marginTop: 0, fontSize: 18 }}>Program Summary</h2>
                   <table>
                     <thead>
@@ -252,37 +252,37 @@ export default async function ReportPreviewPage({
               </div>
 
               {/* Outcome hero cards */}
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, marginBottom: 24 }}>
-                <div className="card" style={{ textAlign: "center", padding: "28px 20px" }}>
-                  <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--color-muted, #666)", marginBottom: 8 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, marginBottom: 12 }}>
+                <div className="card" style={{ textAlign: "center", padding: "14px 16px" }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--color-muted, #666)", marginBottom: 4 }}>
                     Shelter Placements
                   </div>
-                  <div style={{ fontSize: 64, fontWeight: 800, lineHeight: 1, color: "#1a7f4e" }}>
+                  <div style={{ fontSize: 40, fontWeight: 800, lineHeight: 1, color: "#1a7f4e" }}>
                     {outcomes.shelter_placements}
                   </div>
                 </div>
 
-                <div className="card" style={{ textAlign: "center", padding: "28px 20px" }}>
-                  <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--color-muted, #666)", marginBottom: 8 }}>
+                <div className="card" style={{ textAlign: "center", padding: "14px 16px" }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--color-muted, #666)", marginBottom: 4 }}>
                     Clients Housed on Exit
                   </div>
-                  <div style={{ fontSize: 64, fontWeight: 800, lineHeight: 1, color: "#1a7f4e" }}>
+                  <div style={{ fontSize: 40, fontWeight: 800, lineHeight: 1, color: "#1a7f4e" }}>
                     {outcomes.housed_on_exit}
                   </div>
                 </div>
 
-                <div className="card" style={{ textAlign: "center", padding: "28px 20px" }}>
-                  <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--color-muted, #666)", marginBottom: 8 }}>
+                <div className="card" style={{ textAlign: "center", padding: "14px 16px" }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--color-muted, #666)", marginBottom: 4 }}>
                     Total Positive Outcomes
                   </div>
-                  <div style={{ fontSize: 64, fontWeight: 800, lineHeight: 1, color: "#1a7f4e" }}>
+                  <div style={{ fontSize: 40, fontWeight: 800, lineHeight: 1, color: "#1a7f4e" }}>
                     {outcomes.total_positive_outcomes}
                   </div>
                 </div>
               </div>
 
               {/* KPI Grid */}
-              <div className="kpi-grid" style={{ marginBottom: 24 }}>
+              <div className="kpi-grid" style={{ marginBottom: 10 }}>
                 <div className="kpi-card">
                   <div className="kpi-label">Active clients</div>
                   <div className="kpi-value">{kpis.total_active}</div>
@@ -303,7 +303,7 @@ export default async function ReportPreviewPage({
               </div>
 
               {/* Program Summary Table */}
-              <div className="card" style={{ overflowX: "auto", marginBottom: 24 }}>
+              <div className="card" style={{ overflowX: "auto", marginBottom: 10 }}>
                 <h2 style={{ marginTop: 0, fontSize: 18 }}>Program Summary</h2>
                 <table>
                   <thead>

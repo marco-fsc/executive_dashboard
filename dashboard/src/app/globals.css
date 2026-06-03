@@ -281,24 +281,26 @@ label {
 /* ------ Print/Report Styles ------ */
 .report-page {
   page-break-after: always;
-  padding: 40px;
+  break-after: page;
+  padding: 32px;
   background: white;
   min-height: 100vh;
 }
 
 .report-page:last-child {
   page-break-after: auto;
+  break-after: auto;
 }
 
 .report-header {
-  margin-bottom: 32px;
-  padding-bottom: 16px;
+  margin-bottom: 16px;
+  padding-bottom: 10px;
   border-bottom: 3px solid var(--color-brand);
 }
 
 .report-header h1 {
-  margin: 0 0 8px;
-  font-size: 32px;
+  margin: 0 0 4px;
+  font-size: 26px;
   color: var(--color-brand-dark);
 }
 
@@ -326,27 +328,66 @@ label {
 
 /* Optimize cards for printing */
 @media print {
+  @page {
+    size: letter portrait;
+    margin: 0.35in;
+  }
+
   body {
     background: white;
   }
-  
+
   .report-page {
     page-break-after: always;
-    padding: 20px;
+    break-after: page;
+    padding: 0;
+    min-height: unset;
   }
-  
+
+  .report-page:last-child {
+    page-break-after: auto;
+    break-after: auto;
+  }
+
   .card {
     box-shadow: none;
     border: 1px solid var(--color-border);
-    break-inside: avoid;
+    margin-top: 8px;
+    padding: 12px;
   }
-  
+
   .kpi-card {
     box-shadow: none;
     border: 1px solid var(--color-border);
-    break-inside: avoid;
+    padding: 12px;
   }
-  
+
+  .kpi-card .kpi-value {
+    font-size: 24px;
+  }
+
+  .report-header {
+    margin-bottom: 10px;
+  }
+
+  table {
+    font-size: 11px;
+  }
+
+  th, td {
+    padding: 4px 6px;
+  }
+
+  h2 {
+    font-size: 14px !important;
+    margin-bottom: 6px;
+  }
+
+  .service-row {
+    font-size: 11px;
+    padding: 3px 0;
+  }
+
   /* Ensure colored backgrounds print */
   * {
     -webkit-print-color-adjust: exact;
