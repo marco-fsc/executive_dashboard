@@ -25,7 +25,6 @@ export function ReportConfigModal({
   const [startDate, setStartDate] = useState(defaultStartDate ?? "");
   const [endDate, setEndDate] = useState(defaultEndDate ?? "");
   const [includeServices, setIncludeServices] = useState(false);
-  const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   if (!isOpen) return null;
@@ -46,48 +45,23 @@ export function ReportConfigModal({
     setSelectedPrograms([]);
   };
 
-  const handleGenerate = async () => {
+  const handleGenerate = () => {
     setError(null);
-    
+
     if (selectedPrograms.length === 0) {
       setError("Please select at least one program");
       return;
     }
 
-    setIsGenerating(true);
+    const params = new URLSearchParams();
+    params.set("programs", selectedPrograms.join(","));
+    if (startDate) params.set("startDate", startDate);
+    if (endDate) params.set("endDate", endDate);
+    params.set("includeServices", includeServices.toString());
+    params.set("autoprint", "1");
 
-    try {
-      const params = new URLSearchParams();
-      params.set("programs", selectedPrograms.join(","));
-      if (startDate) params.set("startDate", startDate);
-      if (endDate) params.set("endDate", endDate);
-      params.set("includeServices", includeServices.toString());
-
-      const response = await fetch(`/api/report/generate?${params.toString()}`);
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(errorText || "Failed to generate report");
-      }
-
-      // Create a blob from the response and trigger download
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `FSC_Report_${new Date().toISOString().split("T")[0]}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-
-      // Close modal on success
-      onClose();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
-    } finally {
-      setIsGenerating(false);
-    }
+    window.open(`/report/preview?${params.toString()}`, "_blank");
+    onClose();
   };
 
   const handleBackdropClick = (e: React.MouseEvent) => {
@@ -247,20 +221,19 @@ export function ReportConfigModal({
             type="button"
             onClick={onClose}
             className="secondary"
-            disabled={isGenerating}
           >
             Cancel
           </button>
           <button
             type="button"
             onClick={handleGenerate}
-            disabled={isGenerating || selectedPrograms.length === 0}
+            disabled={selectedPrograms.length === 0}
             style={{
-              opacity: isGenerating || selectedPrograms.length === 0 ? 0.5 : 1,
-              cursor: isGenerating || selectedPrograms.length === 0 ? "not-allowed" : "pointer",
+              opacity: selectedPrograms.length === 0 ? 0.5 : 1,
+              cursor: selectedPrograms.length === 0 ? "not-allowed" : "pointer",
             }}
           >
-            {isGenerating ? "Generating..." : "Generate PDF"}
+            Open Print View
           </button>
         </div>
       </div>

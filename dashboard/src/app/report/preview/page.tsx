@@ -10,6 +10,7 @@ import {
   type ProgramSummaryRow,
   type ExitDestinationBreakdown
 } from "@/lib/metrics";
+import { AutoPrint } from "./AutoPrint";
 
 // Group by category for the expanded breakdown view
 function groupByCategory(rows: ExitDestinationBreakdown[]): Map<string, ExitDestinationBreakdown[]> {
@@ -48,6 +49,7 @@ export default async function ReportPreviewPage({
     startDate?: string; 
     endDate?: string; 
     includeServices?: string;
+    autoprint?: string;
   }>;
 }) {
   const session = await auth();
@@ -59,6 +61,7 @@ export default async function ReportPreviewPage({
   const programsParam = sp?.programs ?? "";
   const programs = programsParam.split(",").filter(Boolean);
   const includeServices = sp?.includeServices === "true";
+  const autoprint = sp?.autoprint === "1";
   
   const dateFilter = resolveExecutiveDateFilter({
     startDate: sp?.startDate,
@@ -80,6 +83,7 @@ export default async function ReportPreviewPage({
 
   return (
     <div className="report-view">
+      {autoprint && <AutoPrint />}
       {programs.length === 0 ? (
         // All programs report
         <div className="report-page">

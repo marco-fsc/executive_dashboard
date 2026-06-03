@@ -12,14 +12,12 @@
     "push-data": "tsx scripts/push-dataset.ts"
   },
   "dependencies": {
-    "@sparticuz/chromium": "^126.0.0",
     "@vercel/blob": "^2.3.3",
     "exceljs": "^4.4.0",
     "next": "^15.0.0",
     "next-auth": "5.0.0-beta.31",
     "papaparse": "^5.5.3",
     "pdf-lib": "^1.17.1",
-    "puppeteer-core": "^22.10.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
