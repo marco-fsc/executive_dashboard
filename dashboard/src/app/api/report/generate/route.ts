@@ -33,17 +33,11 @@ export async function GET(request: NextRequest) {
     console.log("Generating PDF from:", previewUrl);
 
     // Launch Puppeteer with optimized args for Vercel
+    chromium.setHeadlessMode = true;
+    chromium.setGraphicsMode = false;
+
     const browser = await puppeteer.launch({
-      args: [
-        ...chromium.args,
-        '--disable-gpu',
-        '--disable-dev-shm-usage',
-        '--disable-setuid-sandbox',
-        '--no-first-run',
-        '--no-sandbox',
-        '--no-zygote',
-        '--single-process',
-      ],
+      args: chromium.args,
       defaultViewport: chromium.defaultViewport,
       executablePath: await chromium.executablePath(),
       headless: chromium.headless,
