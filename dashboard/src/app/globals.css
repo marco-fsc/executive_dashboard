@@ -277,3 +277,79 @@ label {
 .service-row strong {
   color: var(--color-brand-dark);
 }
+
+/* ------ Print/Report Styles ------ */
+.report-page {
+  page-break-after: always;
+  padding: 40px;
+  background: white;
+  min-height: 100vh;
+}
+
+.report-page:last-child {
+  page-break-after: auto;
+}
+
+.report-header {
+  margin-bottom: 32px;
+  padding-bottom: 16px;
+  border-bottom: 3px solid var(--color-brand);
+}
+
+.report-header h1 {
+  margin: 0 0 8px;
+  font-size: 32px;
+  color: var(--color-brand-dark);
+}
+
+.report-header .report-meta {
+  font-size: 14px;
+  color: var(--color-muted);
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.report-header .report-meta strong {
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+/* Hide navigation and interactive elements in reports */
+.report-view .topnav,
+.report-view .export-buttons,
+.report-view .filter-form,
+.report-view button:not(.report-keep),
+.report-view .sign-out-btn {
+  display: none !important;
+}
+
+/* Optimize cards for printing */
+@media print {
+  body {
+    background: white;
+  }
+  
+  .report-page {
+    page-break-after: always;
+    padding: 20px;
+  }
+  
+  .card {
+    box-shadow: none;
+    border: 1px solid var(--color-border);
+    break-inside: avoid;
+  }
+  
+  .kpi-card {
+    box-shadow: none;
+    border: 1px solid var(--color-border);
+    break-inside: avoid;
+  }
+  
+  /* Ensure colored backgrounds print */
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}

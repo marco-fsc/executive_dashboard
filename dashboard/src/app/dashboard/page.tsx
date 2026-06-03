@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { TopNav } from "@/app/_components/TopNav";
 import { SignOutButton } from "@/app/_components/AuthButtons";
+import { ExportSection } from "@/app/_components/ExportSection";
 import { readCurrentDataset } from "@/lib/blob-dataset-store";
 import { resolveExecutiveDateFilter } from "@/lib/date-filter";
 import { canKpis, executiveKpis, executiveOutcomeKpis, programList, programSummary, serviceCounts } from "@/lib/metrics";
@@ -56,23 +57,14 @@ export default async function DashboardPage({
           </div>
         ) : (
           <>
-            <div className="card" style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center" }}>
-              <div style={{ fontSize: 13, color: "#555" }}>
-                Data uploaded: <strong>{new Date(ds.meta.uploadedAt).toLocaleString()}</strong>
-              </div>
-              <div style={{ display: "flex", gap: 12 }}>
-                <a
-                  href={`/api/export?format=excel&report=executive${exportDateQuery ? `&${exportDateQuery}` : ""}${program ? `&program=${encodeURIComponent(program)}` : ""}`}
-                >
-                  Export Excel
-                </a>
-                <a
-                  href={`/api/export?format=pdf&report=executive${exportDateQuery ? `&${exportDateQuery}` : ""}${program ? `&program=${encodeURIComponent(program)}` : ""}`}
-                >
-                  Export PDF
-                </a>
-              </div>
-            </div>
+            <ExportSection
+              uploadedAt={ds.meta.uploadedAt}
+              exportDateQuery={exportDateQuery}
+              program={program}
+              programList={programList(ds)}
+              startDate={dateFilter.startDate}
+              endDate={dateFilter.endDate}
+            />
 
             <form method="get" className="card" style={{ display: "flex", gap: 12, alignItems: "end", flexWrap: "wrap" }}>
               {isLockedRole ? (

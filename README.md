@@ -8,7 +8,7 @@ Live: <https://www.dashboard.firststepcommunities.org>
 ---
 
 ## Run Dashboard - 3 Tier report in hmis
-(Run The Rsport)[https://sac.clarityhs.com/report/embed/117577/1]
+(Run The Report)[https://sac.clarityhs.com/report/embed/117577/1]
 
 ## Quick Start
 
@@ -67,6 +67,8 @@ docs/                          ← Reference documents & legacy scripts
 | `/clients` | **Client List** — filterable table with risk flags, health status, service history |
 | `/upload` | Upload a new HMIS CSV export (processes and stores in Vercel Blob) |
 | `/api/export` | Excel / PDF data exports |
+| `/report/preview` | **Report Preview** — Clean HTML rendering for PDF conversion (internal) |
+| `/api/report/generate` | **Generate PDF Report** — Puppeteer-based PDF generation from preview HTML |
 
 ---
 
@@ -86,6 +88,42 @@ npx tsx scripts/push-dataset.ts "../path/to/export.csv"
 ```
 
 Requires `BLOB_READ_WRITE_TOKEN` and `INGEST_SALT` in `dashboard/.env.local`.
+
+---
+
+## Report Generation
+
+The dashboard includes an enhanced PDF report generator that renders the actual dashboard HTML into professional, print-ready PDFs.
+
+### Features
+
+- **Multi-program reports**: Select multiple programs to generate a single PDF with one page per program
+- **Date filtering**: Apply custom date ranges to filter metrics
+- **Optional services table**: Include or exclude the services breakdown
+- **Professional formatting**: Clean, print-optimized layouts with headers, KPI cards, and program summaries
+- **Expanded exit destinations**: Program tables automatically show exit destination breakdowns
+
+### Using the Report Generator
+
+1. Sign in and navigate to the Executive Dashboard (`/dashboard`)
+2. Apply any desired filters (program, date range)
+3. Click **"Generate Report"** button
+4. In the modal:
+   - Select one or more programs (or keep "All Programs")
+   - Adjust date range if needed
+   - Check "Include Services Table" if desired
+   - Click "Generate PDF"
+5. The PDF will download automatically
+
+### Technical Implementation
+
+The report generator uses:
+- **Puppeteer** (`puppeteer-core` + `@sparticuz/chromium`) for headless Chrome rendering
+- **Preview page** (`/report/preview`) that renders clean HTML without navigation elements
+- **API endpoint** (`/api/report/generate`) that converts the preview HTML to PDF
+- **Print-optimized CSS** with page breaks, hidden navigation, and clean borders
+
+Reports reuse existing metric calculations and component structures, ensuring consistency with the live dashboard.
 
 ---
 
@@ -133,7 +171,8 @@ Register these in the Azure App Registration:
 - **Vercel Blob** — dataset storage
 - **PapaParse** — CSV parsing
 - **ExcelJS** — spreadsheet export
-- **pdf-lib** — PDF report generation
+- **Puppeteer** (`puppeteer-core` + `@sparticuz/chromium`) — HTML-to-PDF conversion
+- **pdf-lib** — legacy PDF export (minimal)
 
 ---
 
