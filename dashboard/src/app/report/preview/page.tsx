@@ -3,7 +3,6 @@ import { redirect } from "next/navigation";
 import { readCurrentDataset } from "@/lib/blob-dataset-store";
 import { resolveExecutiveDateFilter } from "@/lib/date-filter";
 import { 
-  canKpis, 
   executiveKpis, 
   executiveOutcomeKpis, 
   programSummary, 
@@ -96,7 +95,6 @@ export default async function ReportPreviewPage({
           {(() => {
             const kpis = executiveKpis(ds, null, dateFilter);
             const outcomes = executiveOutcomeKpis(ds, null, dateFilter);
-            const can = canKpis(ds, dateFilter);
             const programsData = programSummary(ds, null, dateFilter);
             const svc = serviceCounts(ds, { dateFilter, program: null });
 
@@ -147,9 +145,9 @@ export default async function ReportPreviewPage({
                     <div className="kpi-value">{kpis.no_recent_contact}</div>
                   </div>
                   <div className="kpi-card highlight">
-                    <div className="kpi-label">CAN positive outcomes</div>
-                    <div className="kpi-value">{can.positive_pct}%</div>
-                    <div className="kpi-sub">{can.positive_exits} of {can.total_exits} exits</div>
+                    <div className="kpi-label">Positive outcomes</div>
+                    <div className="kpi-value">{outcomes.total_positive_outcome_pct}%</div>
+                    <div className="kpi-sub">{outcomes.total_positive_outcomes} of {outcomes.total_exit_clients} exits</div>
                   </div>
                 </div>
 
@@ -235,7 +233,6 @@ export default async function ReportPreviewPage({
         programs.map((program, idx) => {
           const kpis = executiveKpis(ds, program, dateFilter);
           const outcomes = executiveOutcomeKpis(ds, program, dateFilter);
-          const can = canKpis(ds, dateFilter);
           const programsData = programSummary(ds, program, dateFilter);
           const svc = serviceCounts(ds, { dateFilter, program });
 
@@ -295,9 +292,9 @@ export default async function ReportPreviewPage({
                   <div className="kpi-value">{kpis.no_recent_contact}</div>
                 </div>
                 <div className="kpi-card highlight">
-                  <div className="kpi-label">CAN positive outcomes</div>
-                  <div className="kpi-value">{can.positive_pct}%</div>
-                  <div className="kpi-sub">{can.positive_exits} of {can.total_exits} exits</div>
+                  <div className="kpi-label">Positive outcomes</div>
+                  <div className="kpi-value">{outcomes.total_positive_outcome_pct}%</div>
+                  <div className="kpi-sub">{outcomes.total_positive_outcomes} of {outcomes.total_exit_clients} exits</div>
                 </div>
               </div>
 

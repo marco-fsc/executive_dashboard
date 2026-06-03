@@ -5,7 +5,7 @@ import { SignOutButton } from "@/app/_components/AuthButtons";
 import { ExportSection } from "@/app/_components/ExportSection";
 import { readCurrentDataset } from "@/lib/blob-dataset-store";
 import { resolveExecutiveDateFilter } from "@/lib/date-filter";
-import { canKpis, executiveKpis, executiveOutcomeKpis, programList, programSummary, serviceCounts } from "@/lib/metrics";
+import { executiveKpis, executiveOutcomeKpis, programList, programSummary, serviceCounts } from "@/lib/metrics";
 import { readAcl, resolveRole, PAGE_ROLES } from "@/lib/acl";
 import { ProgramSummaryTable } from "./ProgramSummaryTable";
 
@@ -104,7 +104,6 @@ export default async function DashboardPage({
             {(() => {
               const kpis = executiveKpis(ds, program || null, dateFilter);
               const outcomes = executiveOutcomeKpis(ds, program || null, dateFilter);
-              const can = canKpis(ds, dateFilter);
               const programs = programSummary(ds, program || null, dateFilter);
               const svc = serviceCounts(ds, { dateFilter, program: program || null });
 
@@ -154,9 +153,9 @@ export default async function DashboardPage({
                       <div className="kpi-value">{kpis.no_recent_contact}</div>
                     </div>
                     <div className="kpi-card highlight">
-                      <div className="kpi-label">CAN positive outcomes</div>
-                      <div className="kpi-value">{can.positive_pct}%</div>
-                      <div className="kpi-sub">{can.positive_exits} of {can.total_exits} exits (perm + temp + shelter + other)</div>
+                      <div className="kpi-label">Positive outcomes</div>
+                      <div className="kpi-value">{outcomes.total_positive_outcome_pct}%</div>
+                      <div className="kpi-sub">{outcomes.total_positive_outcomes} of {outcomes.total_exit_clients} exits</div>
                     </div>
                   </div>
 
