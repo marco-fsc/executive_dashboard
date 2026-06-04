@@ -190,19 +190,41 @@ export default async function ReportPreviewPage({
 
                             {hasDestinations && cats.map((cat) => {
                               const entries = grouped.get(cat)!;
-                              const isPositive = categoryPositive(entries);
+                              const positiveEntries = entries.filter((e) => e.is_positive);
+                              const negativeEntries = entries.filter((e) => !e.is_positive);
+                              const isMixed = positiveEntries.length > 0 && negativeEntries.length > 0;
+                              const catColor = isMixed ? "#92400e" : negativeEntries.length === 0 ? "#1a7f4e" : "#b91c1c";
                               return (
                                 <tr key={`${r.program}-${cat}`} style={{ fontSize: 13, background: "#fafafa" }}>
                                   <td colSpan={7} style={{ paddingLeft: 24 }}>
-                                    <div style={{ fontWeight: 600, marginBottom: 4, color: isPositive ? "#1a7f4e" : "#b91c1c" }}>
+                                    <div style={{ fontWeight: 600, marginBottom: 4, color: catColor }}>
                                       {cat}
                                     </div>
-                                    {entries.map((e) => (
-                                      <div key={e.destination} style={{ display: "flex", justifyContent: "space-between", fontSize: 12, padding: "2px 0" }}>
-                                        <span style={{ paddingLeft: 12 }}>{e.destination}</span>
-                                        <span>{e.count}</span>
-                                      </div>
-                                    ))}
+                                    {isMixed ? (
+                                      <>
+                                        <div style={{ fontSize: 11, fontWeight: 600, color: "#1a7f4e", marginBottom: 2, paddingLeft: 12 }}>Positive</div>
+                                        {positiveEntries.map((e) => (
+                                          <div key={e.destination} style={{ display: "flex", justifyContent: "space-between", fontSize: 12, padding: "2px 0" }}>
+                                            <span style={{ paddingLeft: 12 }}>{e.destination}</span>
+                                            <span>{e.count}</span>
+                                          </div>
+                                        ))}
+                                        <div style={{ fontSize: 11, fontWeight: 600, color: "#b91c1c", marginTop: 4, marginBottom: 2, paddingLeft: 12 }}>Negative</div>
+                                        {negativeEntries.map((e) => (
+                                          <div key={e.destination} style={{ display: "flex", justifyContent: "space-between", fontSize: 12, padding: "2px 0", color: "#b91c1c" }}>
+                                            <span style={{ paddingLeft: 12 }}>{e.destination}</span>
+                                            <span>{e.count}</span>
+                                          </div>
+                                        ))}
+                                      </>
+                                    ) : (
+                                      entries.map((e) => (
+                                        <div key={e.destination} style={{ display: "flex", justifyContent: "space-between", fontSize: 12, padding: "2px 0", color: negativeEntries.length > 0 ? "#b91c1c" : "inherit" }}>
+                                          <span style={{ paddingLeft: 12 }}>{e.destination}</span>
+                                          <span>{e.count}</span>
+                                        </div>
+                                      ))
+                                    )}
                                   </td>
                                 </tr>
                               );
@@ -337,19 +359,41 @@ export default async function ReportPreviewPage({
 
                           {hasDestinations && cats.map((cat) => {
                             const entries = grouped.get(cat)!;
-                            const isPositive = categoryPositive(entries);
+                            const positiveEntries = entries.filter((e) => e.is_positive);
+                            const negativeEntries = entries.filter((e) => !e.is_positive);
+                            const isMixed = positiveEntries.length > 0 && negativeEntries.length > 0;
+                            const catColor = isMixed ? "#92400e" : negativeEntries.length === 0 ? "#1a7f4e" : "#b91c1c";
                             return (
                               <tr key={`${r.program}-${cat}`} style={{ fontSize: 13, background: "#fafafa" }}>
                                 <td colSpan={7} style={{ paddingLeft: 24 }}>
-                                  <div style={{ fontWeight: 600, marginBottom: 4, color: isPositive ? "#1a7f4e" : "#b91c1c" }}>
+                                  <div style={{ fontWeight: 600, marginBottom: 4, color: catColor }}>
                                     {cat}
                                   </div>
-                                  {entries.map((e) => (
-                                    <div key={e.destination} style={{ display: "flex", justifyContent: "space-between", fontSize: 12, padding: "2px 0" }}>
-                                      <span style={{ paddingLeft: 12 }}>{e.destination}</span>
-                                      <span>{e.count}</span>
-                                    </div>
-                                  ))}
+                                  {isMixed ? (
+                                    <>
+                                      <div style={{ fontSize: 11, fontWeight: 600, color: "#1a7f4e", marginBottom: 2, paddingLeft: 12 }}>Positive</div>
+                                      {positiveEntries.map((e) => (
+                                        <div key={e.destination} style={{ display: "flex", justifyContent: "space-between", fontSize: 12, padding: "2px 0" }}>
+                                          <span style={{ paddingLeft: 12 }}>{e.destination}</span>
+                                          <span>{e.count}</span>
+                                        </div>
+                                      ))}
+                                      <div style={{ fontSize: 11, fontWeight: 600, color: "#b91c1c", marginTop: 4, marginBottom: 2, paddingLeft: 12 }}>Negative</div>
+                                      {negativeEntries.map((e) => (
+                                        <div key={e.destination} style={{ display: "flex", justifyContent: "space-between", fontSize: 12, padding: "2px 0", color: "#b91c1c" }}>
+                                          <span style={{ paddingLeft: 12 }}>{e.destination}</span>
+                                          <span>{e.count}</span>
+                                        </div>
+                                      ))}
+                                    </>
+                                  ) : (
+                                    entries.map((e) => (
+                                      <div key={e.destination} style={{ display: "flex", justifyContent: "space-between", fontSize: 12, padding: "2px 0", color: negativeEntries.length > 0 ? "#b91c1c" : "inherit" }}>
+                                        <span style={{ paddingLeft: 12 }}>{e.destination}</span>
+                                        <span>{e.count}</span>
+                                      </div>
+                                    ))
+                                  )}
                                 </td>
                               </tr>
                             );

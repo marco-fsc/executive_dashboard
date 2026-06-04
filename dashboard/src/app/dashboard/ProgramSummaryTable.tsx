@@ -113,8 +113,58 @@ export function ProgramSummaryTable({ programs }: { programs: ProgramSummaryRow[
                       </div>
                       {cats.map((cat) => {
                         const entries = grouped.get(cat)!;
-                        const catIsPos = categoryPositive(cat, entries);
+                        const positiveEntries = entries.filter((e) => e.is_positive);
+                        const negativeEntries = entries.filter((e) => !e.is_positive);
+                        const isMixed = positiveEntries.length > 0 && negativeEntries.length > 0;
+                        const allPositive = negativeEntries.length === 0;
                         const catTotal = entries.reduce((s, e) => s + e.count, 0);
+
+                        const destRow = (e: ExitDestinationBreakdown) => (
+                          <div
+                            key={e.destination}
+                            style={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                              alignItems: "center",
+                              padding: "2px 0",
+                              fontSize: 12,
+                            }}
+                          >
+                            <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                              {e.is_positive ? (
+                                <span style={{ color: "var(--color-brand)", fontSize: 10 }}>✓</span>
+                              ) : (
+                                <span style={{ color: "#dc2626", fontSize: 10 }}>✗</span>
+                              )}
+                              {e.destination}
+                              {e.is_permanent && (
+                                <span
+                                  style={{
+                                    fontSize: 9,
+                                    fontWeight: 700,
+                                    padding: "1px 5px",
+                                    borderRadius: 3,
+                                    background: "var(--color-brand-dark)",
+                                    color: "#fff",
+                                  }}
+                                >
+                                  PERM
+                                </span>
+                              )}
+                            </span>
+                            <span
+                              style={{
+                                fontWeight: 600,
+                                minWidth: 28,
+                                textAlign: "right",
+                                color: e.is_positive ? "inherit" : "#dc2626",
+                              }}
+                            >
+                              {e.count}
+                            </span>
+                          </div>
+                        );
+
                         return (
                           <div key={cat} style={{ marginBottom: 10 }}>
                             <div
@@ -127,7 +177,7 @@ export function ProgramSummaryTable({ programs }: { programs: ProgramSummaryRow[
                             >
                               <span style={{ fontSize: 12, fontWeight: 600 }}>{cat}</span>
                               <span style={{ fontSize: 11, color: "var(--color-muted)" }}>({catTotal})</span>
-                              {catIsPos && (
+                              {allPositive && (
                                 <span
                                   style={{
                                     fontSize: 10,
@@ -144,51 +194,16 @@ export function ProgramSummaryTable({ programs }: { programs: ProgramSummaryRow[
                               )}
                             </div>
                             <div style={{ paddingLeft: 12 }}>
-                              {entries.map((e) => (
-                                <div
-                                  key={e.destination}
-                                  style={{
-                                    display: "flex",
-                                    justifyContent: "space-between",
-                                    alignItems: "center",
-                                    padding: "2px 0",
-                                    fontSize: 12,
-                                  }}
-                                >
-                                  <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                                    {e.is_positive ? (
-                                      <span style={{ color: "var(--color-brand)", fontSize: 10 }}>✓</span>
-                                    ) : (
-                                      <span style={{ color: "var(--color-muted)", fontSize: 10 }}>✗</span>
-                                    )}
-                                    {e.destination}
-                                    {e.is_permanent && (
-                                      <span
-                                        style={{
-                                          fontSize: 9,
-                                          fontWeight: 700,
-                                          padding: "1px 5px",
-                                          borderRadius: 3,
-                                          background: "var(--color-brand-dark)",
-                                          color: "#fff",
-                                        }}
-                                      >
-                                        PERM
-                                      </span>
-                                    )}
-                                  </span>
-                                  <span
-                                    style={{
-                                      fontWeight: 600,
-                                      minWidth: 28,
-                                      textAlign: "right",
-                                      color: e.is_positive ? "inherit" : "var(--color-muted)",
-                                    }}
-                                  >
-                                    {e.count}
-                                  </span>
-                                </div>
-                              ))}
+                              {isMixed ? (
+                                <>
+                                  <div style={{ fontSize: 11, fontWeight: 600, color: "var(--color-brand)", marginBottom: 2 }}>Positive</div>
+                                  {positiveEntries.map(destRow)}
+                                  <div style={{ fontSize: 11, fontWeight: 600, color: "#dc2626", marginTop: 6, marginBottom: 2 }}>Negative</div>
+                                  {negativeEntries.map(destRow)}
+                                </>
+                              ) : (
+                                entries.map(destRow)
+                              )}
                             </div>
                           </div>
                         );
