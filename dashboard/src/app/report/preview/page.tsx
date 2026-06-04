@@ -211,7 +211,7 @@ export default async function ReportPreviewPage({
                                         ))}
                                         <div style={{ fontSize: 11, fontWeight: 600, color: "#b91c1c", marginTop: 4, marginBottom: 2, paddingLeft: 12 }}>Negative</div>
                                         {negativeEntries.map((e) => (
-                                          <div key={e.destination} style={{ display: "flex", justifyContent: "space-between", fontSize: 12, padding: "2px 0", color: "#b91c1c" }}>
+                                          <div key={e.destination} style={{ display: "flex", justifyContent: "space-between", fontSize: 12, padding: "2px 0" }}>
                                             <span style={{ paddingLeft: 12 }}>{e.destination}</span>
                                             <span>{e.count}</span>
                                           </div>
@@ -219,7 +219,7 @@ export default async function ReportPreviewPage({
                                       </>
                                     ) : (
                                       entries.map((e) => (
-                                        <div key={e.destination} style={{ display: "flex", justifyContent: "space-between", fontSize: 12, padding: "2px 0", color: negativeEntries.length > 0 ? "#b91c1c" : "inherit" }}>
+                                        <div key={e.destination} style={{ display: "flex", justifyContent: "space-between", fontSize: 12, padding: "2px 0" }}>
                                           <span style={{ paddingLeft: 12 }}>{e.destination}</span>
                                           <span>{e.count}</span>
                                         </div>
@@ -380,7 +380,7 @@ export default async function ReportPreviewPage({
                                       ))}
                                       <div style={{ fontSize: 11, fontWeight: 600, color: "#b91c1c", marginTop: 4, marginBottom: 2, paddingLeft: 12 }}>Negative</div>
                                       {negativeEntries.map((e) => (
-                                        <div key={e.destination} style={{ display: "flex", justifyContent: "space-between", fontSize: 12, padding: "2px 0", color: "#b91c1c" }}>
+                                        <div key={e.destination} style={{ display: "flex", justifyContent: "space-between", fontSize: 12, padding: "2px 0" }}>
                                           <span style={{ paddingLeft: 12 }}>{e.destination}</span>
                                           <span>{e.count}</span>
                                         </div>
@@ -388,7 +388,7 @@ export default async function ReportPreviewPage({
                                     </>
                                   ) : (
                                     entries.map((e) => (
-                                      <div key={e.destination} style={{ display: "flex", justifyContent: "space-between", fontSize: 12, padding: "2px 0", color: negativeEntries.length > 0 ? "#b91c1c" : "inherit" }}>
+                                      <div key={e.destination} style={{ display: "flex", justifyContent: "space-between", fontSize: 12, padding: "2px 0" }}>
                                         <span style={{ paddingLeft: 12 }}>{e.destination}</span>
                                         <span>{e.count}</span>
                                       </div>

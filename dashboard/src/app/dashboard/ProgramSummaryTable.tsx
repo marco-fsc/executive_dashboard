@@ -157,7 +157,6 @@ export function ProgramSummaryTable({ programs }: { programs: ProgramSummaryRow[
                                 fontWeight: 600,
                                 minWidth: 28,
                                 textAlign: "right",
-                                color: e.is_positive ? "inherit" : "#dc2626",
                               }}
                             >
                               {e.count}
