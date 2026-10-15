@@ -36,11 +36,11 @@ export interface Acl {
 export function getAdminEmail(): string {
   return (
     process.env.ADMIN_EMAIL ?? "mdelfava@firststepcommunities.org"
-  ).toLowerCase();
+  ).trim().toLowerCase();
 }
 
 export function isAdminEmail(email: string): boolean {
-  return email.toLowerCase() === getAdminEmail();
+  return email.trim().toLowerCase() === getAdminEmail();
 }
 
 // ─── Role resolution ──────────────────────────────────────────────────────────

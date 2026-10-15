@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { SignInButton, SignOutButton } from "@/app/_components/AuthButtons";
 import { TopNav } from "@/app/_components/TopNav";
+import { LocalAdminLogin } from "@/app/_components/LocalAdminLogin";
 
 export default async function HomePage() {
   const session = await auth();
@@ -10,12 +11,13 @@ export default async function HomePage() {
       <TopNav email={session?.user?.email ?? null} />
       <main>
         <h1>FSC Dashboard</h1>
-        <p>This app is protected by Microsoft Entra ID.</p>
+        <p>Sign in with your Microsoft account or a local administrator account.</p>
 
         {!session ? (
           <div className="card">
             <p>You are not signed in.</p>
             <SignInButton />
+            {process.env.LOCAL_ADMIN_PASSWORD_HASH ? <LocalAdminLogin /> : null}
           </div>
         ) : (
           <div className="card">

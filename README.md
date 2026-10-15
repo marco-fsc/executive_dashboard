@@ -7,6 +7,11 @@ Live: <https://www.dashboard.firststepcommunities.org>
 
 ---
 
+```bash
+cd fsc_dashboard/dashboard
+npx tsx scripts/push-dataset.ts "C:\Users\MarcoDelFava\PycharmProjects\PythonProject\FSC_Code\fsc_dashboard\sept-2-2.csv"
+```
+
 ## Run Dashboard - 3 Tier report in hmis
 (Run The Report)[https://sac.clarityhs.com/report/embed/117577/1]
 
@@ -18,7 +23,38 @@ npm install
 npm run dev
 ```
 
-Visit **http://localhost:3000**. In development mode sign-in is not required.
+Visit **http://localhost:3000**. Sign in with Microsoft or configure the local administrator below.
+
+### Local administrator (Microsoft-independent fallback)
+
+From the `dashboard` directory, run:
+
+```powershell
+npx tsx scripts\setup-local-admin.ts
+```
+
+This creates a strong random password, prints it once for you to save privately,
+and stores only its salted scrypt hash in the git-ignored `.env.local`.
+It also creates `AUTH_SECRET` locally if missing. Restart the app, then use
+username **admin** and the generated password on the home page.
+There is no built-in `admin/password` credential.
+
+For the deployed dashboard, copy the printed `LOCAL_ADMIN_PASSWORD_HASH` value
+into Vercel's environment variables, ensure `AUTH_SECRET` is set, and redeploy.
+Do not commit either value. Running the script again rotates the local password;
+update Vercel and redeploy to rotate the deployed password too.
+Without the hash, local admin sign-in is disabled and its form is hidden.
+The fallback uses the configured `ADMIN_EMAIL` identity, so it has the same
+permissions as the Microsoft administrator, including access management.
+
+### Microsoft sign-in troubleshooting
+
+Set the three `AUTH_MICROSOFT_ENTRA_ID_*` variables and `AUTH_SECRET` in the
+environment where the app runs, and register the matching redirect URI below.
+Set `ADMIN_EMAIL` to the exact email identity returned by Microsoft for the
+administrator (default: `mdelfava@firststepcommunities.org`). Other accounts
+must be granted access on the Admin page; sharing the organization domain alone
+does not grant access. The legacy `EXEC_ALLOWED_EMAILS` variable is not used.
 
 ---
 
@@ -154,7 +190,8 @@ The `@sparticuz/chromium` package is optimized for Vercel's serverless environme
 | `AUTH_MICROSOFT_ENTRA_ID_ID` | Entra **Application (client) ID** |
 | `AUTH_MICROSOFT_ENTRA_ID_SECRET` | Entra client secret value |
 | `AUTH_MICROSOFT_ENTRA_ID_ISSUER` | `https://login.microsoftonline.com/<TENANT_ID>/v2.0` |
-| `EXEC_ALLOWED_EMAILS` | Comma-separated allow list. Use `@domain.org` for domain-wide access |
+| `ADMIN_EMAIL` | Microsoft administrator email; defaults to `mdelfava@firststepcommunities.org` |
+| `LOCAL_ADMIN_PASSWORD_HASH` | Optional salted scrypt hash from the setup script; enables the `admin` fallback |
 | `BLOB_READ_WRITE_TOKEN` | Vercel Blob store token |
 | `INGEST_SALT` | Random salt for anonymised identifiers |
 
