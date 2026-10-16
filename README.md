@@ -9,7 +9,7 @@ Live: <https://www.dashboard.firststepcommunities.org>
 
 ```bash
 cd fsc_dashboard/dashboard
-npx tsx scripts/push-dataset.ts "C:\Users\MarcoDelFava\PycharmProjects\PythonProject\FSC_Code\fsc_dashboard\sept-2-2.csv"
+npx tsx scripts/push-dataset.ts "C:\Users\MarcoDelFava\PycharmProjects\PythonProject\FSC_Code\fsc_dashboard\sac_connection_model client_model 2026-10-15T1611.csv"
 ```
 
 ## Run Dashboard - 3 Tier report in hmis
@@ -206,6 +206,7 @@ and in `dashboard/.env.local` for local development.
 |---------|-------|
 | Framework Preset | Next.js |
 | Root Directory | `dashboard` |
+| Node.js Version | `24.x` (set by `dashboard/package.json` engines) |
 | Build Command | `npm run build` |
 | Output Directory | *(default)* |
 
