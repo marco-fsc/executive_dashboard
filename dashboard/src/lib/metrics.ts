@@ -7,11 +7,37 @@ const ATTEMPTED_ENGAGEMENT_ITEM = "Attempted Engagement";
 const EMERGENCY_SHELTER_DEST_RE = /emergency shelter|hotel or motel/i;
 const NEGATIVE_OUTCOME_DEST_RE = /place not meant for habitation|not meant for habitation|death|deceased|jail|prison/i;
 
+const PROGRAM_PATTERNS: ReadonlyArray<{ label: string; regex: RegExp }> = [
+  { label: "North A", regex: /north a/i },
+  { label: "Grove", regex: /grove/i },
+  { label: "Roseville Road", regex: /roseville road/i },
+  { label: "Stockton Safe Stay", regex: /stockton.*safe stay|safe stay.*stockton/i },
+  { label: "Weather Respite", regex: /weather respite|sac county weather respite/i },
+  { label: "CAN Team", regex: /can team/i },
+];
+
+export function canonicalProgramName(name?: string | null): string {
+  const value = String(name ?? "").trim();
+  if (!value) return "";
+
+  for (const { label, regex } of PROGRAM_PATTERNS) {
+    if (regex.test(value)) return label;
+  }
+
+  return value;
+}
+
+export function matchesProgramName(actualName: string | null | undefined, selectedProgram?: string | null): boolean {
+  if (!selectedProgram) return true;
+  return canonicalProgramName(actualName) === canonicalProgramName(selectedProgram);
+}
+
 export const PROGRAM_ORDER = [
   "North A",
   "Grove",
   "Roseville Road",
   "Stockton Safe Stay",
+  "Weather Respite",
   "CAN Team",
 ] as const;
 
@@ -83,12 +109,18 @@ function exitDateForEnrollment(enrollment: Enrollment): string | undefined {
 }
 
 export function programList(ds: Dataset): string[] {
-  return Array.from(new Set(ds.enrollments.map((e) => e.Name).filter(Boolean))).sort();
+  return Array.from(
+    new Set(
+      ds.enrollments
+        .map((e) => canonicalProgramName(e.Name))
+        .filter(Boolean)
+    )
+  ).sort();
 }
 
 export function cmList(ds: Dataset, program?: string | null): string[] {
   let rows = ds.enrollments;
-  if (program) rows = rows.filter((e) => e.Name === program);
+  if (program) rows = rows.filter((e) => matchesProgramName(e.Name, program));
   return Array.from(
     new Set(rows.map((e) => e["Assigned Staff"]).filter((v): v is string => Boolean(v)))
   ).sort();
@@ -96,7 +128,7 @@ export function cmList(ds: Dataset, program?: string | null): string[] {
 
 export function executiveKpis(ds: Dataset, program?: string | null, dateFilter?: DateFilterSpec | null) {
   let rows = ds.enrollments;
-  if (program) rows = rows.filter((e) => e.Name === program);
+  if (program) rows = rows.filter((e) => matchesProgramName(e.Name, program));
 
   // Exclude CAN team from housing KPIs
   rows = rows.filter((e) => !e.Name.toLowerCase().includes(CAN_IDENTIFIER.toLowerCase()));
@@ -217,7 +249,7 @@ export interface ExecutiveOutcomeKpis {
  */
 export function executiveOutcomeKpis(ds: Dataset, program?: string | null, dateFilter?: DateFilterSpec | null): ExecutiveOutcomeKpis {
   let rows = ds.enrollments;
-  if (program) rows = rows.filter((e) => e.Name === program);
+  if (program) rows = rows.filter((e) => matchesProgramName(e.Name, program));
 
   const exitedAll = rows.filter((e) => String(e["Active in Project"]) === "No");
   const exited = dateFilter
@@ -285,11 +317,12 @@ export interface ProgramSummaryRow {
 
 export function programSummary(ds: Dataset, program?: string | null, dateFilter?: DateFilterSpec | null): ProgramSummaryRow[] {
   let rows = ds.enrollments;
-  if (program) rows = rows.filter((e) => e.Name === program);
+  if (program) rows = rows.filter((e) => matchesProgramName(e.Name, program));
 
   const byProg = new Map<string, Enrollment[]>();
   for (const e of rows) {
-    byProg.set(e.Name, [...(byProg.get(e.Name) ?? []), e]);
+    const key = canonicalProgramName(e.Name);
+    byProg.set(key, [...(byProg.get(key) ?? []), e]);
   }
 
   const out: ProgramSummaryRow[] = [];
@@ -389,7 +422,7 @@ export interface CmSummaryEntry {
 
 export function cmSummary(ds: Dataset, program?: string | null, days?: number | null) {
   let rows = ds.enrollments;
-  if (program) rows = rows.filter((e) => e.Name === program);
+  if (program) rows = rows.filter((e) => matchesProgramName(e.Name, program));
 
   const byCm = new Map<string, Enrollment[]>();
   for (const e of rows) {
@@ -523,7 +556,7 @@ export function clientList(
 ) {
   let rows = ds.enrollments;
 
-  if (filters.program) rows = rows.filter((e) => e.Name === filters.program);
+  if (filters.program) rows = rows.filter((e) => matchesProgramName(e.Name, filters.program));
   if (filters.cm) rows = rows.filter((e) => e["Assigned Staff"] === filters.cm);
   if (filters.active_only) rows = rows.filter((e) => String(e["Active in Project"]) === "Yes");
   if (filters.risk) rows = rows.filter((e) => e["Risk Level"] === filters.risk);
@@ -595,7 +628,7 @@ export function serviceCounts(
   opts: { items?: string[] | null; dateFilter?: DateFilterSpec | null; program?: string | null }
 ) {
   let svc: ServiceEvent[] = ds.services;
-  if (opts.program) svc = svc.filter((s) => s.Name === opts.program);
+  if (opts.program) svc = svc.filter((s) => matchesProgramName(s.Name, opts.program));
 
   if (opts.dateFilter) {
     svc = svc.filter((s) => withinDateFilter(s["Service Attendance Date"], opts.dateFilter));

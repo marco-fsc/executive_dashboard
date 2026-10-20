@@ -2,7 +2,14 @@ import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { TopNav } from "@/app/_components/TopNav";
 import { readCurrentDataset } from "@/lib/blob-dataset-store";
-import { cmSummary, programList, clientList, PROGRAM_ORDER, CAN_IDENTIFIER } from "@/lib/metrics";
+import {
+  cmSummary,
+  programList,
+  clientList,
+  matchesProgramName,
+  PROGRAM_ORDER,
+  CAN_IDENTIFIER,
+} from "@/lib/metrics";
 import { readAcl, resolveRole, PAGE_ROLES } from "@/lib/acl";
 import { CmCardsGroup } from "./CmCardsGroup";
 import type { ClientEntry, ServiceLogEntry } from "./CmCardsGroup";
@@ -108,9 +115,9 @@ export default async function SupervisorPage({
               return programsToShow.map((prog) => {
                 const cms = cmSummary(ds, prog, days);
                 if (!cms.length) return null;
-                const progClients = allClients.filter((c) => c.program === prog);
+                const progClients = allClients.filter((c) => matchesProgramName(c.program, prog));
                 const progServices: ServiceLogEntry[] = ds.services
-                  .filter((s) => s.Name === prog)
+                  .filter((s) => matchesProgramName(s.Name, prog))
                   .map((s) => ({
                     uid: s.uid,
                     service_item: s["Service Item Name"],
