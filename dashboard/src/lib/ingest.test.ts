@@ -137,6 +137,7 @@ for (const dateField of ["Start Start Date", "Start Date Date"]) {
     assert.equal(enrollment.service_count, 1);
     const [client] = clientList(dataset, { active_only: true });
     assert.equal(client.days_since_service, 4);
+    assert.equal(client.days_since_real_service, 4);
     assert.equal(client.flags.includes("No Recent Contact"), false);
     assert.equal(client.flags.includes("No Services"), false);
     assert.equal(clientList(dataset, { no_recent: true }).length, 0);
@@ -217,6 +218,7 @@ for (const dateField of ["Start Start Date", "Start Date Date"]) {
     assert.equal(enrollment.appointment_reminder_count, 1);
     assert.equal(enrollment.last_real_service_date, "2026-10-26");
     assert.equal(enrollment.last_service_date, "2026-10-28");
+    assert.equal(clientList(dataset, {})[0].days_since_real_service, 14);
     assert.equal(clientList(dataset, {})[0].flags.includes("No Recent Contact"), false);
   });
 
@@ -236,6 +238,41 @@ for (const dateField of ["Start Start Date", "Start Date Date"]) {
     assert.equal(dataset.enrollments[0].last_service_date, "2026-09-15");
   });
 }
+
+test("supervisor last-real-service values keep exited and current enrollments separate", (t) => {
+  t.mock.timers.enable({ apis: ["Date"], now: new Date("2026-11-09T12:00:00") });
+  const dataset = buildRows([
+    {
+      "Project Start Date": "2025-01-01",
+      "Project Exit Date": "2026-03-17",
+      "Service Attendance Date": "2026-03-16",
+      "Start Date Date": "2025-01-01",
+    },
+    {
+      "Project Start Date": "2025-01-01",
+      "Project Exit Date": "2026-03-17",
+      "Service Attendance Date": "2026-11-06",
+      "Start Date Date": "2026-06-01",
+    },
+    {
+      "Project Start Date": "2026-06-01",
+      "Project Exit Date": "",
+      "Active in Project": "Yes",
+      "Service Attendance Date": "2026-11-06",
+      "Start Date Date": "2026-06-01",
+    },
+  ]);
+  const clients = clientList(dataset, {});
+  const exited = clients.find((client) => client.exit_date === "2026-03-17");
+  const active = clients.find((client) => client.exit_date === "");
+  assert.ok(exited);
+  assert.ok(active);
+  assert.equal(exited.days_since_real_service, 238);
+  assert.equal(exited.services_count, 1);
+  assert.equal(active.days_since_real_service, 3);
+  assert.equal(active.services_count, 1);
+  assert.equal(clientList(dataset, { active_only: true }).length, 1);
+});
 
 test("legacy date fields still work when attendance columns are absent", () => {
   const dataset = buildDatasetFromRawCsv(Papa.unparse([{

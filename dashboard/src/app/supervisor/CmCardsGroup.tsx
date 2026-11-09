@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import type { CmSummaryEntry } from "@/lib/metrics";
+import { sortAndFilterClients } from "./client-table";
+import type { ClientSortDirection, ClientSortKey, ClientStatusFilter } from "./client-table";
 
 export interface ClientEntry {
   uid: string;
@@ -260,29 +262,85 @@ export function CmCardsGroup({ cms, clients, services, rangeDays }: Props) {
 
 // ── Clients tab ────────────────────────────────────────────────────────────────
 
+const CLIENT_COLUMNS: Array<{
+  key: ClientSortKey;
+  label: string;
+  align: "left" | "right" | "center";
+  title?: string;
+}> = [
+  { key: "uid", label: "UID", align: "left" },
+  { key: "days_in_program", label: "Days In", align: "right" },
+  { key: "days_since_real_service", label: "Last Real Svc", align: "right", title: "Days since last real service" },
+  { key: "services_count", label: "Svcs", align: "right" },
+  { key: "attempted_engagements", label: "Att.", align: "center", title: "Attempted Engagements: CM tried, client unavailable" },
+  { key: "appointment_reminders", label: "Rem.", align: "center", title: "Appointment Reminders" },
+  { key: "risk_level", label: "Risk", align: "left" },
+  { key: "exit_date", label: "Status", align: "left" },
+  { key: "destination", label: "Destination", align: "left" },
+  { key: "flags", label: "Flags", align: "left" },
+];
+
 function ClientsTab({ clients, onClientClick }: { clients: ClientEntry[]; onClientClick: (c: ClientEntry) => void }) {
-  if (clients.length === 0) {
-    return <p style={{ padding: 24, color: "var(--color-muted)" }}>No clients found.</p>;
+  const [status, setStatus] = useState<ClientStatusFilter>("all");
+  const [sortKey, setSortKey] = useState<ClientSortKey>("days_in_program");
+  const [sortDirection, setSortDirection] = useState<ClientSortDirection>("desc");
+  const visibleClients = useMemo(
+    () => sortAndFilterClients(clients, status, sortKey, sortDirection),
+    [clients, status, sortKey, sortDirection]
+  );
+
+  function handleSort(key: ClientSortKey) {
+    if (key === sortKey) {
+      setSortDirection((direction) => direction === "asc" ? "desc" : "asc");
+    } else {
+      setSortKey(key);
+      setSortDirection(["uid", "exit_date", "destination", "flags"].includes(key) ? "asc" : "desc");
+    }
   }
 
   return (
+    <>
+    <div style={{ padding: "12px 24px", display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
+      <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        Status
+        <select value={status} onChange={(event) => {
+          const value = event.target.value;
+          if (value === "all" || value === "active" || value === "exited") setStatus(value);
+        }}>
+          <option value="all">All enrollments</option>
+          <option value="active">Active only</option>
+          <option value="exited">Exited only</option>
+        </select>
+      </label>
+      <span role="status" style={{ fontSize: 12, color: "var(--color-muted)" }}>
+        Showing {visibleClients.length} of {clients.length} enrollments
+      </span>
+    </div>
     <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
       <thead>
         <tr style={{ position: "sticky", top: 0, background: "white", zIndex: 1, borderBottom: "2px solid var(--color-border)" }}>
-          <th style={{ padding: "10px 16px", textAlign: "left" }}>UID</th>
-          <th style={{ padding: "10px 8px", textAlign: "right" }}>Days In</th>
-          <th style={{ padding: "10px 8px", textAlign: "right" }} title="Days since last real service">Last Real Svc</th>
-          <th style={{ padding: "10px 8px", textAlign: "right" }}>Svcs</th>
-          <th style={{ padding: "10px 8px", textAlign: "center" }} title="Attempted Engagements: CM tried, client unavailable">Att.</th>
-          <th style={{ padding: "10px 8px", textAlign: "center" }} title="Appointment Reminders">Rem.</th>
-          <th style={{ padding: "10px 8px", textAlign: "left" }}>Risk</th>
-          <th style={{ padding: "10px 8px", textAlign: "left" }}>Status</th>
-          <th style={{ padding: "10px 8px", textAlign: "left" }}>Destination</th>
-          <th style={{ padding: "10px 16px", textAlign: "left" }}>Flags</th>
+          {CLIENT_COLUMNS.map((column) => (
+            <th key={column.key} scope="col"
+              aria-sort={sortKey === column.key ? (sortDirection === "asc" ? "ascending" : "descending") : "none"}
+              style={{ padding: column.key === "uid" || column.key === "flags" ? "10px 16px" : "10px 8px", textAlign: column.align }}
+              title={column.title}>
+              <button type="button" onClick={() => handleSort(column.key)}
+                aria-label={`Sort by ${column.label}`}
+                style={{ background: "none", border: "none", padding: 0, color: "inherit", font: "inherit", textTransform: "inherit", cursor: "pointer", textAlign: "inherit", whiteSpace: "nowrap" }}>
+                {column.label}
+                <span aria-hidden="true" style={{ marginLeft: 4, opacity: sortKey === column.key ? 1 : 0.3 }}>
+                  {sortKey === column.key ? (sortDirection === "asc" ? "↑" : "↓") : "↕"}
+                </span>
+              </button>
+            </th>
+          ))}
         </tr>
       </thead>
       <tbody>
-        {clients.map((c, i) => {
+        {visibleClients.length === 0 && (
+          <tr><td colSpan={CLIENT_COLUMNS.length} style={{ padding: 24, color: "var(--color-muted)" }}>No clients match this status filter.</td></tr>
+        )}
+        {visibleClients.map((c, i) => {
           const riskClass =
             c.risk_level === "High" ? "badge-high" :
             c.risk_level === "Medium" ? "badge-medium" : "badge-low";
@@ -291,7 +349,7 @@ function ClientsTab({ clients, onClientClick }: { clients: ClientEntry[]; onClie
           const attemptingOnly = c.attempted_engagements > 0 && c.services_count === 0 && !c.exit_date;
 
           return (
-            <tr key={`${c.uid}-${i}`}
+            <tr key={`${c.uid}|${c.program}|${c.enrollment_date}`}
               onClick={() => onClientClick(c)}
               className="tr-clickable"
               title="Click to view client profile"
@@ -341,6 +399,7 @@ function ClientsTab({ clients, onClientClick }: { clients: ClientEntry[]; onClie
         })}
       </tbody>
     </table>
+    </>
   );
 }
 
