@@ -8,15 +8,23 @@ const SUBSTANCE_USE_COLS = new Set([
   "Both alcohol and drug use disorders",
 ]);
 
-function toISODate(value: unknown): ISODateString | "" {
+function toISODate(value: unknown, field: string): ISODateString | "" {
   if (typeof value !== "string" || value.trim() === "") return "";
-  // Handles values like "2026-04-06" or "4/6/2026".
-  const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return "";
+  const text = value.trim();
+  const isDateOnly = /^\d{4}-\d{2}-\d{2}$/.test(text);
+  // Date-only CSV values must not shift to the previous day in local time.
+  const d = new Date(isDateOnly ? `${text}T00:00:00` : text);
+  if (Number.isNaN(d.getTime())) {
+    throw new Error(`Invalid CSV date in ${field}: ${text}`);
+  }
   const yyyy = d.getFullYear();
   const mm = String(d.getMonth() + 1).padStart(2, "0");
   const dd = String(d.getDate()).padStart(2, "0");
-  return `${yyyy}-${mm}-${dd}`;
+  const normalized = `${yyyy}-${mm}-${dd}`;
+  if (isDateOnly && normalized !== text) {
+    throw new Error(`Invalid CSV date in ${field}: ${text}`);
+  }
+  return normalized;
 }
 
 function daysBetween(fromISO: string, toISO: string): number {
@@ -59,6 +67,9 @@ export function buildDatasetFromRawCsv(csvText: string, sourceFilename?: string)
   }
 
   const rawRows = (parsed.data ?? []).map(cleanRowKeys);
+  const serviceStartDateField = ["Start Start Date", "Start Date Date"].find(
+    (field) => parsed.meta.fields?.includes(field)
+  );
 
   const services: ServiceEvent[] = [];
 
@@ -82,22 +93,32 @@ type SvcAgg = {
 
   for (const raw of rawRows) {
     const program = String(raw["Name"] ?? "").trim();
-    const start = toISODate(raw["Project Start Date"]);
+    const start = toISODate(raw["Project Start Date"], "Project Start Date");
     if (!program || !start) continue;
 
     const uidHash = String(raw["Unique Identifier"] ?? "").trim();
     const key = `${uidHash}|${program}|${start}`;
 
-    const svcDate =
-      toISODate(raw["Service Attendance Date"]) ||
-      toISODate(raw["Last Attendance Date"]) ||
-      toISODate(raw["Last Start Date"]);
+    const enrollmentExit = toISODate(raw["Enrollment Exit Date"], "Enrollment Exit Date");
+    const projectExit = toISODate(raw["Project Exit Date"], "Project Exit Date");
+    const exit = enrollmentExit || projectExit;
+    const hasAttendanceColumn =
+      Object.hasOwn(raw, "Service Attendance Date") || Object.hasOwn(raw, "Last Attendance Date");
+    // New exports use service start dates; legacy attendance can be stale.
+    const svcDate = serviceStartDateField
+      ? toISODate(raw[serviceStartDateField], serviceStartDateField)
+      : toISODate(raw["Service Attendance Date"], "Service Attendance Date") ||
+        toISODate(raw["Last Attendance Date"], "Last Attendance Date") ||
+        (!hasAttendanceColumn ? toISODate(raw["Last Start Date"], "Last Start Date") : "");
+    const isServiceInEnrollment = Boolean(
+      svcDate && svcDate >= start && (!exit || svcDate <= exit)
+    );
 
     const svcItem = String(raw["Service Item Name"] ?? "").trim();
     const countRaw = raw["Count"];
     const count = Number.isFinite(Number(countRaw)) ? Number(countRaw) : 1;
 
-    if (svcDate && svcItem) {
+    if (isServiceInEnrollment && svcItem) {
       services.push({
         uid: uidHash,
         Name: program,
@@ -113,24 +134,27 @@ type SvcAgg = {
 
     const agg = svcAggByKey.get(key) ?? { realCount: 0, attemptedCount: 0, reminderCount: 0, lastDate: "", lastRealDate: "" };
 
-    if (isAttempted) {
-      agg.attemptedCount += 1;
-      // Attempted engagements have no date — do not update lastDate/lastRealDate
-    } else if (isReminder) {
-      agg.reminderCount += 1;
-      if (svcDate && (!agg.lastDate || svcDate > agg.lastDate)) agg.lastDate = svcDate;
-    } else {
-      agg.realCount += 1;
-      if (svcDate && (!agg.lastDate || svcDate > agg.lastDate)) agg.lastDate = svcDate;
-      if (svcDate && (!agg.lastRealDate || svcDate > agg.lastRealDate)) agg.lastRealDate = svcDate;
+    if (svcItem && (isServiceInEnrollment || (!svcDate && isAttempted))) {
+      if (isAttempted) {
+        agg.attemptedCount += 1;
+        // Attempted engagements do not update contact dates.
+      } else if (isReminder) {
+        agg.reminderCount += 1;
+        if (!agg.lastDate || svcDate > agg.lastDate) agg.lastDate = svcDate;
+      } else {
+        agg.realCount += 1;
+        if (!agg.lastDate || svcDate > agg.lastDate) agg.lastDate = svcDate;
+        if (!agg.lastRealDate || svcDate > agg.lastRealDate) agg.lastRealDate = svcDate;
+      }
     }
 
     svcAggByKey.set(key, agg);
 
+    const snapshotSvcDate = isServiceInEnrollment && svcItem ? svcDate : "";
     const snapshot = enrollmentsByKey.get(key);
     const shouldReplaceSnapshot =
       !snapshot ||
-      (svcDate && (!snapshot._snapshotSvcDate || svcDate > snapshot._snapshotSvcDate));
+      (snapshotSvcDate && (!snapshot._snapshotSvcDate || snapshotSvcDate > snapshot._snapshotSvcDate));
 
     if (shouldReplaceSnapshot) {
       const daysInProject = Number(raw["Days in Project"]);
@@ -138,10 +162,13 @@ type SvcAgg = {
         uid: uidHash,
         Name: program,
         "Project Start Date": start,
-        "Enrollment Exit Date": toISODate(raw["Enrollment Exit Date"]) || undefined,
-        "Project Exit Date": toISODate(raw["Project Exit Date"]) || undefined,
+        "Enrollment Exit Date": enrollmentExit || undefined,
+        "Project Exit Date": projectExit || undefined,
         "Active in Project": String(raw["Active in Project"] ?? ""),
-        "Assigned Staff": String(raw["Assigned Staff"] ?? "") || undefined,
+        "Assigned Staff":
+          String(raw["Assigned Staff"] ?? "").trim() ||
+          String(raw["Assigned Staff Name"] ?? "").trim() ||
+          undefined,
         "Destination Category": String(raw["Destination Category"] ?? "") || undefined,
         Destination: String(raw["Destination"] ?? "") || undefined,
         "Days in Project": Number.isFinite(daysInProject) ? daysInProject : undefined,
@@ -156,7 +183,7 @@ type SvcAgg = {
         "Hours Worked Last Week": raw["Hours Worked Last Week"] != null && String(raw["Hours Worked Last Week"]).trim() !== "" ? String(raw["Hours Worked Last Week"]).trim() : undefined,
         "Employment Seeking": String(raw["Employment Seeking"] ?? "") || undefined,
         "Employment Tenure": String(raw["Employment Tenure"] ?? "") || undefined,
-        _snapshotSvcDate: svcDate || undefined,
+        _snapshotSvcDate: snapshotSvcDate || undefined,
       });
     }
   }

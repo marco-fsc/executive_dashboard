@@ -112,6 +112,36 @@ docs/                          ← Reference documents & legacy scripts
 
 HMIS data is exported from **ServicePoint** (SUP2 custom report) as CSV.
 
+The service date comes from `Start Start Date`, or `Start Date Date` (the header
+in the November 2026 county export). When either column exists, it is authoritative:
+legacy attendance and summary dates are ignored, even when the service start date
+is blank. If both new headers exist, `Start Start Date` takes precedence.
+For older exports without either header, `Service Attendance Date` is used,
+falling back to `Last Attendance Date`. The normalized dataset retains the internal
+field name `Service Attendance Date` for compatibility with dashboards and exports.
+
+A service is included only when its date is on or after `Project Start Date`
+and on or before `Enrollment Exit Date` (falling back to `Project Exit Date`).
+A blank exit date leaves the upper bound open. Out-of-range services do not affect
+service totals, contact dates, or service-derived risk flags; their enrollment is
+still retained. This filters invalid enrollment associations, not duplicate records
+within overlapping valid enrollments.
+
+In legacy exports, when an attendance column exists, blank attendance is not
+replaced with a summary or enrollment start date. Undated rows do not count as real services or reminders;
+undated attempted engagements retain their separate attempted-engagement count.
+The legacy `Last Start Date` fallback is used only when both new service start
+headers and both attendance columns are absent. Date-only values retain their calendar date regardless of server
+timezone, and invalid nonblank dates reject ingestion.
+
+These rules apply to both web upload routes and the local push script. Existing
+stored datasets must be re-ingested to apply them.
+Staff assignments accept either `Assigned Staff` or `Assigned Staff Name`, with
+the former taking precedence when populated.
+
+Run ingestion regression tests from `dashboard` with
+`node --import tsx --test src\lib\ingest.test.ts`.
+
 ### Option A — Upload via browser
 
 Sign in and visit `/upload`. The CSV is processed server-side and stored in Vercel Blob.
