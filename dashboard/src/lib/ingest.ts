@@ -8,6 +8,9 @@ const SUBSTANCE_USE_COLS = new Set([
   "Both alcohol and drug use disorders",
 ]);
 
+const TEMP_SERVICE_START_FALLBACK_FROM = "2026-09-01";
+const TEMP_SERVICE_START_FALLBACK_THROUGH = "2026-11-30";
+
 function toISODate(value: unknown, field: string): ISODateString | "" {
   if (typeof value !== "string" || value.trim() === "") return "";
   const text = value.trim();
@@ -104,12 +107,22 @@ type SvcAgg = {
     const exit = enrollmentExit || projectExit;
     const hasAttendanceColumn =
       Object.hasOwn(raw, "Service Attendance Date") || Object.hasOwn(raw, "Last Attendance Date");
-    // New exports use service start dates; legacy attendance can be stale.
-    const svcDate = serviceStartDateField
+    const attendanceDate =
+      toISODate(raw["Service Attendance Date"], "Service Attendance Date") ||
+      toISODate(raw["Last Attendance Date"], "Last Attendance Date");
+    const serviceStartDate = !attendanceDate && serviceStartDateField
       ? toISODate(raw[serviceStartDateField], serviceStartDateField)
-      : toISODate(raw["Service Attendance Date"], "Service Attendance Date") ||
-        toISODate(raw["Last Attendance Date"], "Last Attendance Date") ||
-        (!hasAttendanceColumn ? toISODate(raw["Last Start Date"], "Last Start Date") : "");
+      : "";
+    // Temporary county-export workaround, restricted to the approved service months.
+    const useServiceStartFallback =
+      serviceStartDate >= TEMP_SERVICE_START_FALLBACK_FROM &&
+      serviceStartDate <= TEMP_SERVICE_START_FALLBACK_THROUGH;
+    const svcDate =
+      attendanceDate ||
+      (useServiceStartFallback ? serviceStartDate : "") ||
+      (!hasAttendanceColumn && !serviceStartDateField
+        ? toISODate(raw["Last Start Date"], "Last Start Date")
+        : "");
     const isServiceInEnrollment = Boolean(
       svcDate && svcDate >= start && (!exit || svcDate <= exit)
     );

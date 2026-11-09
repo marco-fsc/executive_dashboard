@@ -116,27 +116,27 @@ test("blank legacy attendance is not replaced by a legacy summary or enrollment 
 });
 
 for (const dateField of ["Start Start Date", "Start Date Date"]) {
-  test(`${dateField} drives last service and client-list contact flags instead of stale attendance`, (t) => {
+  test(`attendance drives last service and client-list contact flags instead of ${dateField}`, (t) => {
     t.mock.timers.enable({ apis: ["Date"], now: new Date("2026-11-09T12:00:00") });
     const dataset = buildRows([
       {
         "Project Start Date": "2025-04-22",
         "Project Exit Date": "",
         "Active in Project": "Yes",
-        [dateField]: "2026-10-26",
-        "Service Attendance Date": "2026-09-09",
+        [dateField]: "2025-12-09",
+        "Service Attendance Date": "2026-11-05",
         "Last Attendance Date": "2026-09-09",
         "Last Start Date": "2026-10-30",
       },
     ]);
-    assert.equal(dataset.services[0]["Service Attendance Date"], "2026-10-26");
+    assert.equal(dataset.services[0]["Service Attendance Date"], "2026-11-05");
     const enrollment = dataset.enrollments[0];
-    assert.equal(enrollment.last_service_date, "2026-10-26");
-    assert.equal(enrollment.last_real_service_date, "2026-10-26");
-    assert.equal(enrollment["Days Since Last Service"], 14);
+    assert.equal(enrollment.last_service_date, "2026-11-05");
+    assert.equal(enrollment.last_real_service_date, "2026-11-05");
+    assert.equal(enrollment["Days Since Last Service"], 4);
     assert.equal(enrollment.service_count, 1);
     const [client] = clientList(dataset, { active_only: true });
-    assert.equal(client.days_since_service, 14);
+    assert.equal(client.days_since_service, 4);
     assert.equal(client.flags.includes("No Recent Contact"), false);
     assert.equal(client.flags.includes("No Services"), false);
     assert.equal(clientList(dataset, { no_recent: true }).length, 0);
@@ -160,23 +160,80 @@ for (const dateField of ["Start Start Date", "Start Date Date"]) {
     assert.equal(dataset.enrollments[0].last_service_date, "2026-09-30");
   });
 
-  test(`blank ${dateField} does not fall back to stale attendance or summary dates`, () => {
+  test(`blank ${dateField} does not suppress attendance`, () => {
     const dataset = buildRows([{
       [dateField]: "",
       "Service Attendance Date": "2026-09-15",
       "Last Attendance Date": "2026-09-16",
       "Last Start Date": "2026-09-17",
     }]);
-    assert.equal(dataset.services.length, 0);
-    assert.equal(dataset.enrollments[0].service_count, 0);
-    assert.equal(dataset.enrollments[0].last_service_date, undefined);
+    assert.equal(dataset.services.length, 1);
+    assert.equal(dataset.enrollments[0].service_count, 1);
+    assert.equal(dataset.enrollments[0].last_service_date, "2026-09-15");
   });
 
   test(`invalid ${dateField} rejects ingestion`, () => {
     assert.throws(() => buildRows([{
       [dateField]: "not-a-date",
-      "Service Attendance Date": "2026-09-15",
     }]), /Invalid CSV date/);
+  });
+
+  test(`${dateField} fills blank attendance only in the inclusive temporary window`, () => {
+    const dataset = buildRows(
+      ["2026-08-31", "2026-09-01", "2026-10-26", "2026-11-30", "2026-12-01"].map((date) => ({
+        "Project Start Date": "2025-04-22",
+        "Project Exit Date": "",
+        [dateField]: date,
+        "Last Start Date": "2026-10-30",
+      }))
+    );
+    assert.deepEqual(dataset.services.map((service) => service["Service Attendance Date"]), [
+      "2026-09-01", "2026-10-26", "2026-11-30",
+    ]);
+    assert.equal(dataset.enrollments[0].service_count, 3);
+  });
+
+  test(`${dateField} fallback restores recent contact without promoting attempted engagement`, (t) => {
+    t.mock.timers.enable({ apis: ["Date"], now: new Date("2026-11-09T12:00:00") });
+    const dataset = buildRows([
+      {
+        "Project Exit Date": "",
+        [dateField]: "2026-10-26",
+      },
+      {
+        "Project Exit Date": "",
+        [dateField]: "2026-11-01",
+        "Service Item Name": "Attempted Engagement",
+      },
+      {
+        "Project Exit Date": "",
+        [dateField]: "2026-10-28",
+        "Service Item Name": "Appointment Reminders",
+      },
+    ]);
+    const enrollment = dataset.enrollments[0];
+    assert.equal(enrollment.service_count, 1);
+    assert.equal(enrollment.attempted_engagement_count, 1);
+    assert.equal(enrollment.appointment_reminder_count, 1);
+    assert.equal(enrollment.last_real_service_date, "2026-10-26");
+    assert.equal(enrollment.last_service_date, "2026-10-28");
+    assert.equal(clientList(dataset, {})[0].flags.includes("No Recent Contact"), false);
+  });
+
+  test(`populated attendance is never replaced by a newer ${dateField}`, () => {
+    const dataset = buildRows([{
+      [dateField]: "2026-10-26",
+      "Service Attendance Date": "2026-09-15",
+    }]);
+    assert.equal(dataset.enrollments[0].last_service_date, "2026-09-15");
+  });
+
+  test(`last attendance takes precedence over ${dateField} when primary attendance is blank`, () => {
+    const dataset = buildRows([{
+      [dateField]: "2026-09-20",
+      "Last Attendance Date": "2026-09-15",
+    }]);
+    assert.equal(dataset.enrollments[0].last_service_date, "2026-09-15");
   });
 }
 

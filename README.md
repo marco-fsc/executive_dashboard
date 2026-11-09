@@ -9,7 +9,7 @@ Live: <https://www.dashboard.firststepcommunities.org>
 
 ```bash
 cd fsc_dashboard/dashboard
-npx tsx scripts/push-dataset.ts "C:\Users\MarcoDelFava\PycharmProjects\PythonProject\FSC_Code\fsc_dashboard\sac_connection_model client_model 2026-10-20T1019.csv"
+npx tsx scripts/push-dataset.ts "C:\Users\MarcoDelFava\PycharmProjects\PythonProject\FSC_Code\fsc_dashboard\sac_connection_model client_model 2026-11-09T1029.csv"
 ```
 
 ## Run Dashboard - 3 Tier report in hmis
@@ -112,13 +112,18 @@ docs/                          ← Reference documents & legacy scripts
 
 HMIS data is exported from **ServicePoint** (SUP2 custom report) as CSV.
 
-The service date comes from `Start Start Date`, or `Start Date Date` (the header
-in the November 2026 county export). When either column exists, it is authoritative:
-legacy attendance and summary dates are ignored, even when the service start date
-is blank. If both new headers exist, `Start Start Date` takes precedence.
-For older exports without either header, `Service Attendance Date` is used,
-falling back to `Last Attendance Date`. The normalized dataset retains the internal
-field name `Service Attendance Date` for compatibility with dashboards and exports.
+The service date comes from `Service Attendance Date`, falling back to
+`Last Attendance Date`. Populated attendance always takes precedence over service
+start dates, even if a service start date is newer.
+
+As a temporary county-export workaround for **all programs**, when both attendance
+values are blank (or their columns are absent), use `Start Start Date` or
+`Start Date Date` only if that date falls within **September 1 through November 30,
+2026, inclusive**. If both start-date headers exist, `Start Start Date` takes
+precedence. Dates outside that window do not qualify for the workaround.
+The window is explicitly fixed in `dashboard/src/lib/ingest.ts`; it does not roll
+forward each month. The normalized dataset retains the internal field name
+`Service Attendance Date` for compatibility with dashboards and exports.
 
 A service is included only when its date is on or after `Project Start Date`
 and on or before `Enrollment Exit Date` (falling back to `Project Exit Date`).
@@ -127,8 +132,8 @@ service totals, contact dates, or service-derived risk flags; their enrollment i
 still retained. This filters invalid enrollment associations, not duplicate records
 within overlapping valid enrollments.
 
-In legacy exports, when an attendance column exists, blank attendance is not
-replaced with a summary or enrollment start date. Undated rows do not count as real services or reminders;
+Outside the temporary workaround, blank attendance is not replaced with a summary
+or enrollment start date. Undated rows do not count as real services or reminders;
 undated attempted engagements retain their separate attempted-engagement count.
 The legacy `Last Start Date` fallback is used only when both new service start
 headers and both attendance columns are absent. Date-only values retain their calendar date regardless of server
